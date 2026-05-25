@@ -1,0 +1,106 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    background-color: theme('colors.background');
+  }
+
+  body {
+    @apply text-text-main bg-background font-sans antialiased selection:bg-primary/20 selection:text-primary;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-surface border border-border rounded-2xl shadow-soft transition-all duration-300;
+  }
+  
+  .btn-primary {
+    @apply bg-primary hover:bg-primary-hover text-white font-semibold rounded-xl px-6 py-3 shadow-md hover:shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2;
+  }
+
+  .btn-secondary {
+    @apply bg-white hover:bg-gray-50 text-text-main border border-border font-semibold rounded-xl px-6 py-3 shadow-sm transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer;
+  }
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: theme('colors.background');
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Override html5-qrcode styles to make it clean */
+#reader {
+  border: none !important;
+}
+#reader__dashboard_section_csr button {
+  background-color: #2563EB !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 0.5rem !important;
+  padding: 0.5rem 1rem !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  margin-top: 10px !important;
+}
+#reader__dashboard_section_swaplink {
+  color: #2563EB !important;
+  text-decoration: none !important;
+  font-weight: 500 !important;
+  margin-top: 10px !important;
+  display: inline-block !important;
+}
+#reader__scan_region {
+  border-radius: 0.75rem !important;
+  overflow: hidden !important;
+}
+
+@keyframes rgb-text {
+  0% { filter: hue-rotate(0deg); }
+  100% { filter: hue-rotate(360deg); }
+}
+
+@keyframes marquee {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+.marquee-container {
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.rgb-marquee-title {
+  display: inline-block;
+  white-space: nowrap;
+  color: #ff0000; /* Base color for hue-rotate */
+  animation: marquee 5s linear infinite, rgb-text 2s linear infinite;
+  text-shadow: 0 0 5px currentColor;
+}
