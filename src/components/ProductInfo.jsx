@@ -90,7 +90,8 @@ const ProductInfo = ({ result, onReset, lang }) => {
   };
 
   const handleShareWA = () => {
-    const text = `🔍 *${info.name}*\n\n*Komposisi Utama:*\n${info.composition}\n\n*Catatan Bahaya:*\n${info.hazard}\n\n*Fakta Unik:*\n${info.funFact}\n\n_Di-scan menggunakan JackScanner App_`;
+    const appUrl = window.location.href;
+    const text = `🔍 *Hasil Scan: ${info.name}*\n\n📋 *Komposisi Utama:*\n${info.composition}\n\n⚠️ *Catatan Bahaya:*\n${info.hazard}\n\n💡 *Fakta Menarik:*\n${info.funFact}\n\n---\n📸 _Di-scan cerdas menggunakan JackScanner_\n🌐 Coba aplikasinya gratis di: ${appUrl}`;
     const encodedText = encodeURIComponent(text);
     window.open(`https://wa.me/?text=${encodedText}`, '_blank');
   };

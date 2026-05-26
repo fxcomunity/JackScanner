@@ -60,11 +60,21 @@ function App() {
   const handleScanResult = (result) => {
     setScanResult(result);
     // Add to history
-    if (result && result.name) {
+    if (Array.isArray(result) && result.length > 0) {
+      const topName = result[0].className;
+      const historyItem = { name: topName, data: result, date: new Date().toISOString() };
+      const newHistory = [
+        historyItem,
+        ...scanHistory.filter(h => h.name !== topName)
+      ].slice(0, 10); // Keep last 10
+      setScanHistory(newHistory);
+      localStorage.setItem('scanHistory', JSON.stringify(newHistory));
+    } else if (result && result.name) {
+      // Fallback for legacy format
       const newHistory = [
         { ...result, date: new Date().toISOString() },
         ...scanHistory.filter(h => h.name !== result.name)
-      ].slice(0, 10); // Keep last 10
+      ].slice(0, 10);
       setScanHistory(newHistory);
       localStorage.setItem('scanHistory', JSON.stringify(newHistory));
     }
@@ -76,7 +86,7 @@ function App() {
   };
 
   const handleHistoryItemClick = (item) => {
-    setScanResult(item);
+    setScanResult(item.data || item);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
