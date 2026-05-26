@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Beaker, AlertTriangle, RefreshCcw, BrainCircuit, Box, MousePointerClick, Loader2, Search, Volume2, VolumeX, Download, Share2 } from "lucide-react";
 import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 import { getChemicalInfoFromAI } from "../aiService";
 import { i18n } from "../i18n";
 
-const ProductInfo = ({ result, onReset, lang }) => {
+const ProductInfo = ({ result, onReset, lang, onUpdateInfo }) => {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [customLabel, setCustomLabel] = useState("");
   const [activeLabel, setActiveLabel] = useState(""); // If set, use this instead of camera prediction
@@ -28,6 +29,9 @@ const ProductInfo = ({ result, onReset, lang }) => {
       if (isMounted) {
         setInfo(data);
         setIsLoading(false);
+        if (onUpdateInfo) {
+          onUpdateInfo(labelToFetch, data);
+        }
       }
     };
     
@@ -71,19 +75,20 @@ const ProductInfo = ({ result, onReset, lang }) => {
     }
   };
 
-  const handleDownloadImage = async () => {
+  const handleDownloadPDF = async () => {
     if (!printRef.current) return;
     try {
       setIsDownloading(true);
-      const canvas = await html2canvas(printRef.current, { scale: 4, useCORS: true, backgroundColor: null });
-      const image = canvas.toDataURL("image/png", 1.0);
-      const link = document.createElement("a");
-      link.href = image;
-      link.download = `JackScanner-${info.name.replace(/\s+/g, '-')}.png`;
-      link.click();
+      const canvas = await html2canvas(printRef.current, { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
+      const imgData = canvas.toDataURL("image/jpeg", 1.0);
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      pdf.addImage(imgData, "JPEG", 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`JackScanner-${info.name.replace(/\s+/g, '-')}.pdf`);
     } catch (err) {
-      console.error("Gagal mendownload struk:", err);
-      alert("Gagal membuat gambar laporan.");
+      console.error("Gagal mendownload PDF:", err);
+      alert("Gagal membuat PDF.");
     } finally {
       setIsDownloading(false);
     }
@@ -190,8 +195,8 @@ const ProductInfo = ({ result, onReset, lang }) => {
           <button onClick={handleShareWA} className="btn-secondary whitespace-nowrap !bg-green-50 !text-green-700 !border-green-200 hover:!bg-green-100 hover:!border-green-300 dark:!bg-green-900/30 dark:!text-green-400 dark:!border-green-800">
             <Share2 className="w-4 h-4" /> Share WA
           </button>
-          <button onClick={handleDownloadImage} disabled={isDownloading} className="btn-secondary whitespace-nowrap !bg-blue-50 !text-blue-700 !border-blue-200 hover:!bg-blue-100 hover:!border-blue-300 dark:!bg-blue-900/30 dark:!text-blue-400 dark:!border-blue-800 disabled:opacity-50">
-            {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />} Struk
+          <button onClick={handleDownloadPDF} disabled={isDownloading} className="btn-secondary whitespace-nowrap !bg-blue-50 !text-blue-700 !border-blue-200 hover:!bg-blue-100 hover:!border-blue-300 dark:!bg-blue-900/30 dark:!text-blue-400 dark:!border-blue-800 disabled:opacity-50">
+            {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />} Unduh PDF
           </button>
           <button onClick={onReset} className="btn-secondary whitespace-nowrap">
             <RefreshCcw className="w-4 h-4" /> {t.scanAnother}
@@ -290,15 +295,21 @@ const ProductInfo = ({ result, onReset, lang }) => {
         </div>
       </div>
       
-      {/* Price Estimate */}
+      {/* Price Estimate & E-Commerce */}
       {info.priceEstimate && info.priceEstimate !== "-" && (
-        <div className="card p-6 border border-green-200 bg-green-50 relative overflow-hidden mt-6">
+        <div className="card p-6 border border-green-200 bg-green-50 relative overflow-hidden mt-6" data-html2canvas-ignore>
           <div className="absolute top-0 left-0 w-1 h-full bg-green-500"></div>
-          <div className="flex gap-4 items-center">
-            <div className="w-8 h-8 text-green-700 shrink-0 font-bold text-sm rounded-full bg-green-200 flex items-center justify-center">Rp</div>
-            <div>
-              <h4 className="text-sm font-bold text-green-800 mb-1">{lang === 'id' ? 'Estimasi Harga Pasaran' : 'Estimated Market Price'}</h4>
-              <p className="text-sm text-green-700 font-medium leading-relaxed">{info.priceEstimate}</p>
+          <div className="flex flex-col sm:flex-row gap-4 sm:items-center justify-between">
+            <div className="flex gap-4 items-center">
+              <div className="w-8 h-8 text-green-700 shrink-0 font-bold text-sm rounded-full bg-green-200 flex items-center justify-center">Rp</div>
+              <div>
+                <h4 className="text-sm font-bold text-green-800 mb-1">{lang === 'id' ? 'Estimasi Harga Pasaran' : 'Estimated Market Price'}</h4>
+                <p className="text-sm text-green-700 font-medium leading-relaxed">{info.priceEstimate}</p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <a href={`https://www.tokopedia.com/search?q=${encodeURIComponent(info.name)}`} target="_blank" rel="noreferrer" className="text-xs font-bold px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-sm">Cari di Tokopedia</a>
+              <a href={`https://shopee.co.id/search?keyword=${encodeURIComponent(info.name)}`} target="_blank" rel="noreferrer" className="text-xs font-bold px-4 py-2 bg-[#ee4d2d] text-white rounded-lg hover:bg-[#d73211] transition-colors shadow-sm">Cari di Shopee</a>
             </div>
           </div>
         </div>

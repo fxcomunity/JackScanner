@@ -12,13 +12,13 @@ export default {
         mono: ['"JetBrains Mono"', 'monospace'],
       },
       colors: {
-        background: '#F8FAFC',
-        surface: '#FFFFFF',
+        background: 'rgb(var(--background) / <alpha-value>)',
+        surface: 'rgb(var(--surface) / <alpha-value>)',
         primary: '#2563EB',
         'primary-hover': '#1D4ED8',
-        'text-main': '#0F172A',
-        'text-muted': '#64748B',
-        border: '#E2E8F0',
+        'text-main': 'rgb(var(--text-main) / <alpha-value>)',
+        'text-muted': 'rgb(var(--text-muted) / <alpha-value>)',
+        border: 'rgb(var(--border) / <alpha-value>)',
       },
       boxShadow: {
         'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',

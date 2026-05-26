@@ -5,9 +5,25 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --background: 248 250 252;
+    --surface: 255 255 255;
+    --text-main: 15 23 42;
+    --text-muted: 100 116 139;
+    --border: 226 232 240;
+  }
+  
+  .dark {
+    --background: 15 23 42;
+    --surface: 30 41 59;
+    --text-main: 248 250 252;
+    --text-muted: 148 163 184;
+    --border: 51 65 85;
+  }
+
   html {
     scroll-behavior: smooth;
-    background-color: theme('colors.background');
+    background-color: rgb(var(--background));
   }
 
   body {
@@ -129,4 +145,14 @@
   70% { transform: scale(0.9) rotate(-5deg); }
   85% { transform: scale(1.1) rotate(2deg); }
   100% { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+
+@keyframes scan-laser {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(300px); }
+  100% { transform: translateY(0); }
+}
+
+.animate-scan-laser {
+  animation: scan-laser 3s ease-in-out infinite;
 }
