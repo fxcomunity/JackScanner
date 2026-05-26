@@ -262,6 +262,17 @@ function App() {
                   Vallbot
                 </a>
                 
+                {/* Website Profile */}
+                <a 
+                  href="https://fxcomunity.vercel.app" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-surface border border-border text-text-main text-sm font-bold rounded-xl hover:bg-background transition-all shadow-sm hover:shadow-md active:scale-95"
+                >
+                  <Globe className="w-5 h-5 text-blue-500" />
+                  Website Profile
+                </a>
+                
                 {/* GitHub */}
                 <a 
                   href="https://github.com/fxcomunity" 

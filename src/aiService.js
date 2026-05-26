@@ -50,7 +50,7 @@ export const getChemicalInfoFromAI = async (label, lang = 'id') => {
       }
 
       const targetLangName = languages.find(l => l.code === lang)?.name || 'English';
-      const prompt = `Analisis secara ilmiah dan mendalam benda ini: "${label}". Jawab dalam bahasa ${targetLangName}. Berikan penjelasan yang sangat rinci dan detail. SANGAT PENTING: Data yang diberikan harus 100% akurat secara ilmiah dan faktual berdasarkan ilmu kimia/fisika, JANGAN MENGARANG ATAU MENEBAK ASAL-ASALAN (No Hallucination). JIKA benda tersebut memiliki unsur atau zat kimia yang jelas (misalnya Air, Garam, dll), sertakan rumus kimianya (seperti H2O, NaCl). JIKA berupa material kompleks (seperti Kayu, Plastik Polimer), cukup sebutkan nama ilmiah/senyawa utamanya tanpa memaksa rumus kimia yang tidak relevan. Kembalikan HANYA JSON murni (TANPA block markdown \`\`\`) dengan struktur pasti seperti ini: {"name": "nama spesifik benda/zat", "composition": "deskripsi detail penyusun utamanya", "chemicals": [{"name": "nama zat (dan rumus kimianya JIKA ADA)", "desc": "penjelasan detail fungsi/peran zat tersebut"}], "hazard": "potensi bahaya fisik, kimia, atau lingkungan secara spesifik", "funFact": "fakta sains kimia/fisika menarik terkait benda ini"}`;
+      const prompt = `Analisis secara ilmiah dan mendalam benda ini: "${label}". Jawab dalam bahasa ${targetLangName}. Berikan penjelasan yang sangat rinci dan detail. SANGAT PENTING: Data yang diberikan harus 100% akurat secara ilmiah dan faktual berdasarkan ilmu kimia/fisika, JANGAN MENGARANG ATAU MENEBAK ASAL-ASALAN (No Hallucination). JIKA benda tersebut memiliki unsur atau zat kimia yang jelas (misalnya Air, Garam, dll), sertakan rumus kimianya (seperti H2O, NaCl). JIKA berupa material kompleks (seperti Kayu, Plastik Polimer), cukup sebutkan nama ilmiah/senyawa utamanya tanpa memaksa rumus kimia yang tidak relevan. Kembalikan HANYA JSON murni (TANPA block markdown \`\`\`) dengan struktur pasti seperti ini: {"name": "nama spesifik benda/zat", "composition": "deskripsi detail penyusun utamanya", "chemicals": [{"name": "nama zat (dan rumus kimianya JIKA ADA)", "desc": "penjelasan detail fungsi/peran zat tersebut"}], "hazard": "potensi bahaya fisik, kimia, atau lingkungan secara spesifik", "funFact": "fakta sains kimia/fisika menarik terkait benda ini", "priceEstimate": "Estimasi harga pasaran benda ini dalam Rupiah (misal: Rp 5.000 - Rp 15.000 atau Rp 50.000+)"}`;
 
       let aiResponseData = null;
       let engineUsed = "DeepSeek AI";
@@ -136,7 +136,8 @@ export const getChemicalInfoFromAI = async (label, lang = 'id') => {
             composition: safeString(parsedJSON.composition),
             chemicals: Array.isArray(parsedJSON.chemicals) ? parsedJSON.chemicals : [],
             hazard: safeString(parsedJSON.hazard),
-            funFact: safeString(parsedJSON.funFact)
+            funFact: safeString(parsedJSON.funFact),
+            priceEstimate: safeString(parsedJSON.priceEstimate)
           };
         } catch (parseError) {
           console.error("Gagal parse JSON dari AI:", parseError);
@@ -146,7 +147,8 @@ export const getChemicalInfoFromAI = async (label, lang = 'id') => {
              composition: `Sistem menerima data dengan format yang tidak valid.`,
              chemicals: [],
              hazard: "-",
-             funFact: "-"
+             funFact: "-",
+             priceEstimate: "-"
           };
         }
       }

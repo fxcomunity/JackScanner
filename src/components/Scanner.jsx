@@ -3,7 +3,7 @@ import Webcam from 'react-webcam';
 import { ScanLine, Loader2, CameraOff, Camera, Upload, Image as ImageIcon, Smartphone, Monitor, Barcode, Wand2 } from 'lucide-react';
 import { Html5QrcodeScanner, Html5QrcodeScanType } from 'html5-qrcode';
 import { i18n } from '../i18n';
-import { playBeep } from '../utils/audio';
+import { playBeep, playShutter } from '../utils/audio';
 
 const Scanner = ({ onScanResult, lang }) => {
   const webcamRef = useRef(null);
@@ -14,6 +14,7 @@ const Scanner = ({ onScanResult, lang }) => {
   const [imageSrc, setImageSrc] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [barcodeError, setBarcodeError] = useState("");
+  const [isFlashing, setIsFlashing] = useState(false);
 
   const t = i18n[lang].scanner;
 
@@ -152,7 +153,13 @@ const Scanner = ({ onScanResult, lang }) => {
   };
 
   const captureAndScan = async () => {
-    playBeep();
+    if (scanMode === 'camera') {
+      playShutter();
+      setIsFlashing(true);
+      setTimeout(() => setIsFlashing(false), 150);
+    } else {
+      playBeep();
+    }
     setIsScanning(true);
     try {
       const base64DataWithPrefix = scanMode === 'camera' 
@@ -311,6 +318,9 @@ const Scanner = ({ onScanResult, lang }) => {
                 className="w-full h-auto rounded-lg object-cover max-h-[400px]"
               />
               <div className="absolute inset-0 border-4 border-primary/50 m-6 rounded-xl animate-pulse pointer-events-none"></div>
+              {isFlashing && (
+                <div className="absolute inset-0 bg-white z-50 pointer-events-none"></div>
+              )}
             </>
           )}
         </div>

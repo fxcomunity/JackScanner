@@ -290,6 +290,20 @@ const ProductInfo = ({ result, onReset, lang }) => {
         </div>
       </div>
       
+      {/* Price Estimate */}
+      {info.priceEstimate && info.priceEstimate !== "-" && (
+        <div className="card p-6 border border-green-200 bg-green-50 relative overflow-hidden mt-6">
+          <div className="absolute top-0 left-0 w-1 h-full bg-green-500"></div>
+          <div className="flex gap-4 items-center">
+            <div className="w-8 h-8 text-green-700 shrink-0 font-bold text-sm rounded-full bg-green-200 flex items-center justify-center">Rp</div>
+            <div>
+              <h4 className="text-sm font-bold text-green-800 mb-1">{lang === 'id' ? 'Estimasi Harga Pasaran' : 'Estimated Market Price'}</h4>
+              <p className="text-sm text-green-700 font-medium leading-relaxed">{info.priceEstimate}</p>
+            </div>
+          </div>
+        </div>
+      )}
+      
     </div>
   );
 };

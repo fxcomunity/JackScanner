@@ -21,6 +21,40 @@ export const playBeep = () => {
   }
 };
 
+export const playShutter = () => {
+  try {
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    // Create a short noise burst for the shutter "click"
+    const bufferSize = audioCtx.sampleRate * 0.05; // 50ms
+    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    const data = buffer.getChannelData(0);
+    
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = Math.random() * 2 - 1;
+    }
+    
+    const noiseSource = audioCtx.createBufferSource();
+    noiseSource.buffer = buffer;
+    
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.value = 4000;
+    
+    const gainNode = audioCtx.createGain();
+    gainNode.gain.setValueAtTime(1, audioCtx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+    
+    noiseSource.connect(filter);
+    filter.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    
+    noiseSource.start(audioCtx.currentTime);
+  } catch (e) {
+    console.warn("AudioContext tidak didukung", e);
+  }
+};
+
 export const speakText = (text, lang = 'id-ID') => {
   if (!('speechSynthesis' in window)) {
     console.warn("Web Speech API tidak didukung");
