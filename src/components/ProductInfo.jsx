@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
-import { Beaker, AlertTriangle, RefreshCcw, BrainCircuit, Box, MousePointerClick, Loader2, Search } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { Beaker, AlertTriangle, RefreshCcw, BrainCircuit, Box, MousePointerClick, Loader2, Search, Volume2, VolumeX, Download, Share2 } from "lucide-react";
+import html2canvas from "html2canvas";
 import { getChemicalInfoFromAI } from "../aiService";
 import { i18n } from "../i18n";
 
@@ -9,6 +10,9 @@ const ProductInfo = ({ result, onReset, lang }) => {
   const [activeLabel, setActiveLabel] = useState(""); // If set, use this instead of camera prediction
   const [info, setInfo] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const printRef = useRef(null);
   
   const selectedPrediction = result[selectedIndex];
   const confidencePercent = (selectedPrediction.probability * 100).toFixed(1);
@@ -29,7 +33,10 @@ const ProductInfo = ({ result, onReset, lang }) => {
     
     fetchInfo();
     
-    return () => { isMounted = false; };
+    return () => { 
+      isMounted = false; 
+      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    };
   }, [selectedPrediction.className, activeLabel, lang]);
 
   const handleCustomSubmit = (e) => {
@@ -45,39 +52,154 @@ const ProductInfo = ({ result, onReset, lang }) => {
     setSelectedIndex(idx);
   };
 
+  const handleSpeak = () => {
+    if ('speechSynthesis' in window) {
+      if (isPlaying) {
+        window.speechSynthesis.cancel();
+        setIsPlaying(false);
+      } else {
+        const textToRead = `${info.name}. ${t.composition}: ${info.composition}. ${t.hazard}: ${info.hazard}.`;
+        const utterance = new SpeechSynthesisUtterance(textToRead);
+        utterance.lang = lang === 'id' ? 'id-ID' : 'en-US';
+        utterance.onend = () => setIsPlaying(false);
+        utterance.onerror = () => setIsPlaying(false);
+        window.speechSynthesis.speak(utterance);
+        setIsPlaying(true);
+      }
+    } else {
+      alert("Browser Anda tidak mendukung fitur suara.");
+    }
+  };
+
+  const handleDownloadImage = async () => {
+    if (!printRef.current) return;
+    try {
+      setIsDownloading(true);
+      const canvas = await html2canvas(printRef.current, { scale: 4, useCORS: true, backgroundColor: null });
+      const image = canvas.toDataURL("image/png", 1.0);
+      const link = document.createElement("a");
+      link.href = image;
+      link.download = `JackScanner-${info.name.replace(/\s+/g, '-')}.png`;
+      link.click();
+    } catch (err) {
+      console.error("Gagal mendownload struk:", err);
+      alert("Gagal membuat gambar laporan.");
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  const handleShareWA = () => {
+    const text = `🔍 *${info.name}*\n\n*Komposisi Utama:*\n${info.composition}\n\n*Catatan Bahaya:*\n${info.hazard}\n\n*Fakta Unik:*\n${info.funFact}\n\n_Di-scan menggunakan JackScanner App_`;
+    const encodedText = encodeURIComponent(text);
+    window.open(`https://wa.me/?text=${encodedText}`, '_blank');
+  };
+
   if (isLoading || !info) {
     return (
-      <div className="card p-12 flex flex-col items-center justify-center bg-white space-y-4 animate-fade-in-up border-2 border-primary/20">
-        <Loader2 className="w-12 h-12 text-primary animate-spin" />
-        <h3 className="text-xl font-bold text-text-main">{t.analyzing}</h3>
-        <p className="text-text-muted text-center max-w-sm text-sm">
-          {t.contactingDb} "<span className="font-mono text-primary font-bold">{activeLabel || selectedPrediction.className}</span>".
-        </p>
+      <div className="space-y-6 animate-pulse">
+        {/* Skeleton Header */}
+        <div className="card p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-l-4 border-gray-300 dark:border-gray-700 bg-surface">
+          <div className="space-y-3 w-full sm:w-1/2">
+            <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-1/3"></div>
+            <div className="flex items-center gap-3">
+              <div className="h-8 bg-gray-300 dark:bg-gray-700 rounded w-3/4"></div>
+              <div className="w-9 h-9 bg-gray-200 dark:bg-gray-800 rounded-full shrink-0"></div>
+            </div>
+            <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-1/4"></div>
+          </div>
+          <div className="flex flex-wrap gap-2 shrink-0">
+            <div className="w-24 h-10 bg-gray-200 dark:bg-gray-800 rounded-xl"></div>
+            <div className="w-24 h-10 bg-gray-200 dark:bg-gray-800 rounded-xl"></div>
+            <div className="w-24 h-10 bg-gray-200 dark:bg-gray-800 rounded-xl"></div>
+          </div>
+        </div>
+
+        {/* Skeleton Manual Override */}
+        <div className="card p-4 bg-background border border-border space-y-4">
+          <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-1/2 md:w-1/3 mb-2"></div>
+          <div className="flex gap-2">
+            <div className="flex-1 h-10 bg-gray-200 dark:bg-gray-800 rounded-lg"></div>
+            <div className="w-20 h-10 bg-gray-300 dark:bg-gray-700 rounded-xl"></div>
+          </div>
+        </div>
+
+        {/* Skeleton Composition Overview */}
+        <div className="card p-6 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800">
+          <div className="h-6 bg-gray-300 dark:bg-gray-700 rounded w-1/4 mb-4"></div>
+          <div className="bg-surface p-4 rounded-xl border border-border space-y-3">
+            <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-full"></div>
+            <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-5/6"></div>
+            <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-4/6"></div>
+          </div>
+        </div>
+
+        {/* Skeleton Chemical Breakdown */}
+        <div>
+          <div className="h-6 bg-gray-300 dark:bg-gray-700 rounded w-1/3 mb-4 px-1"></div>
+          <div className="grid grid-cols-1 gap-3">
+            {[1, 2].map((i) => (
+              <div key={i} className="card p-4 flex flex-col sm:flex-row gap-4 bg-surface">
+                <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-800 shrink-0"></div>
+                <div className="space-y-3 w-full flex-1 pt-1">
+                  <div className="h-5 bg-gray-300 dark:bg-gray-700 rounded w-1/3"></div>
+                  <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-full"></div>
+                  <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-2/3"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Loading Indicator Overlay */}
+        <div className="text-center pt-2 pb-6 flex flex-col items-center justify-center space-y-3">
+          <Loader2 className="w-8 h-8 text-primary animate-spin mx-auto" />
+          <p className="text-text-muted text-sm font-medium animate-pulse">
+            {t.contactingDb} "<span className="font-mono text-primary font-bold">{activeLabel || selectedPrediction.className}</span>"...
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 animate-fade-in-up">
+    <div className="space-y-6 animate-fade-in-up" ref={printRef}>
       {/* Result Header */}
-      <div className="card p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-l-4 border-l-primary bg-white">
+      <div className="card p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-l-4 border-l-primary bg-surface">
         <div>
           <p className="text-sm font-semibold text-primary uppercase tracking-wider mb-1 flex items-center gap-2">
             <BrainCircuit className="w-4 h-4" /> 
             {activeLabel ? "Manual Input (User)" : `${t.confidence}: ${confidencePercent}%`}
           </p>
-          <h2 className="text-2xl font-bold text-text-main capitalize">{info.name}</h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-2xl font-bold text-text-main capitalize">{info.name}</h2>
+            <button 
+              onClick={handleSpeak}
+              className={`p-2 rounded-full transition-colors ${isPlaying ? 'bg-primary text-white shadow-md animate-pulse' : 'bg-background text-text-muted hover:bg-gray-200 dark:hover:bg-gray-800'}`}
+              title="Bacakan Info"
+            >
+              {isPlaying ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+            </button>
+          </div>
           <p className="text-text-muted text-sm mt-1">
-            {t.originalLabel}: <span className="font-mono text-xs bg-gray-100 px-2 py-0.5 rounded text-gray-600">{activeLabel || selectedPrediction.className}</span>
+            {t.originalLabel}: <span className="font-mono text-xs bg-background px-2 py-0.5 rounded text-text-muted">{activeLabel || selectedPrediction.className}</span>
           </p>
         </div>
-        <button onClick={onReset} className="btn-secondary whitespace-nowrap shrink-0">
-          <RefreshCcw className="w-4 h-4" /> {t.scanAnother}
-        </button>
+        <div className="flex flex-wrap gap-2 shrink-0" data-html2canvas-ignore>
+          <button onClick={handleShareWA} className="btn-secondary whitespace-nowrap !bg-green-50 !text-green-700 !border-green-200 hover:!bg-green-100 hover:!border-green-300 dark:!bg-green-900/30 dark:!text-green-400 dark:!border-green-800">
+            <Share2 className="w-4 h-4" /> Share WA
+          </button>
+          <button onClick={handleDownloadImage} disabled={isDownloading} className="btn-secondary whitespace-nowrap !bg-blue-50 !text-blue-700 !border-blue-200 hover:!bg-blue-100 hover:!border-blue-300 dark:!bg-blue-900/30 dark:!text-blue-400 dark:!border-blue-800 disabled:opacity-50">
+            {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />} Struk
+          </button>
+          <button onClick={onReset} className="btn-secondary whitespace-nowrap">
+            <RefreshCcw className="w-4 h-4" /> {t.scanAnother}
+          </button>
+        </div>
       </div>
 
       {/* Manual Override & Alternative Predictions */}
-      <div className="card p-4 bg-gray-50 border border-gray-200 space-y-4">
+      <div className="card p-4 bg-background border border-border space-y-4" data-html2canvas-ignore>
         
         {/* Manual Input Form */}
         <div>
@@ -113,7 +235,7 @@ const ProductInfo = ({ result, onReset, lang }) => {
                   className={`text-xs px-3 py-1.5 rounded-full font-medium transition-colors ${
                     selectedIndex === idx && !activeLabel
                       ? 'bg-primary text-white shadow-sm' 
-                      : 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-100'
+                      : 'bg-surface text-text-muted border border-border hover:bg-background'
                   }`}
                 >
                   {pred.className} ({(pred.probability * 100).toFixed(0)}%)
@@ -129,7 +251,7 @@ const ProductInfo = ({ result, onReset, lang }) => {
         <h3 className="font-semibold text-text-main flex items-center gap-2 mb-3">
           <Box className="w-5 h-5 text-primary" /> {t.composition}
         </h3>
-        <p className="text-text-muted leading-relaxed bg-white p-4 rounded-xl border border-border whitespace-pre-wrap">
+        <p className="text-text-muted leading-relaxed bg-surface p-4 rounded-xl border border-border whitespace-pre-wrap">
           {info.composition}
         </p>
       </div>
@@ -141,7 +263,7 @@ const ProductInfo = ({ result, onReset, lang }) => {
         </h3>
         <div className="grid grid-cols-1 gap-3">
           {info.chemicals.map((chem, idx) => (
-            <div key={idx} className="card p-4 hover:shadow-md transition-shadow flex flex-col sm:flex-row gap-4 bg-white">
+            <div key={idx} className="card p-4 hover:shadow-md transition-shadow flex flex-col sm:flex-row gap-4 bg-surface">
               <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
                 <Beaker className="w-5 h-5 text-blue-600" />
               </div>

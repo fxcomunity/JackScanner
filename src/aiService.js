@@ -1,4 +1,5 @@
 import { Pool } from '@neondatabase/serverless';
+import { languages } from './i18n';
 
 // Menginisialisasi koneksi ke Neon Tech Database
 const getDbPool = () => {
@@ -40,15 +41,16 @@ export const getChemicalInfoFromAI = async (label, lang = 'id') => {
       if (!deepSeekKey && !mistralKey) {
         return {
           name: label,
-          type: "Database & AI Kosong",
-          composition: `Benda ini belum ada di Database Neon, dan Anda belum memasukkan API Key DeepSeek atau Mistral.`,
+          type: "Data Tidak Ditemukan",
+          composition: `Benda ini belum ada di database sistem kami.`,
           chemicals: [{ name: "Material Tidak Diketahui", desc: "Sistem belum memiliki data ini." }],
-          hazard: "Masukkan API Key di .env untuk mengaktifkan AI Otomatis.",
-          funFact: "Anda bisa menambahkan data benda ini nanti ke Neon DB."
+          hazard: "Data belum tersedia.",
+          funFact: "Anda bisa menambahkan data benda ini nanti ke sistem."
         };
       }
 
-      const prompt = `Analisis secara ilmiah benda ini: "${label}". Jawab dalam bahasa ${lang === 'id' ? 'Indonesia' : 'Inggris'} dan kembalikan HANYA JSON murni (TANPA block markdown \`\`\`) dengan struktur pasti seperti ini: {"name": "nama benda yang disempurnakan", "composition": "deskripsi penyusun utamanya", "chemicals": [{"name": "nama zat kimia 1", "desc": "fungsinya"}, {"name": "nama zat kimia 2", "desc": "fungsinya"}], "hazard": "potensi bahaya fisik atau lingkungan", "funFact": "fakta sains menarik terkait benda ini"}`;
+      const targetLangName = languages.find(l => l.code === lang)?.name || 'English';
+      const prompt = `Analisis secara ilmiah dan mendalam benda ini: "${label}". Jawab dalam bahasa ${targetLangName}. Berikan penjelasan yang sangat rinci dan detail. SANGAT PENTING: Data yang diberikan harus 100% akurat secara ilmiah dan faktual berdasarkan ilmu kimia/fisika, JANGAN MENGARANG ATAU MENEBAK ASAL-ASALAN (No Hallucination). JIKA benda tersebut memiliki unsur atau zat kimia yang jelas (misalnya Air, Garam, dll), sertakan rumus kimianya (seperti H2O, NaCl). JIKA berupa material kompleks (seperti Kayu, Plastik Polimer), cukup sebutkan nama ilmiah/senyawa utamanya tanpa memaksa rumus kimia yang tidak relevan. Kembalikan HANYA JSON murni (TANPA block markdown \`\`\`) dengan struktur pasti seperti ini: {"name": "nama spesifik benda/zat", "composition": "deskripsi detail penyusun utamanya", "chemicals": [{"name": "nama zat (dan rumus kimianya JIKA ADA)", "desc": "penjelasan detail fungsi/peran zat tersebut"}], "hazard": "potensi bahaya fisik, kimia, atau lingkungan secara spesifik", "funFact": "fakta sains kimia/fisika menarik terkait benda ini"}`;
 
       let aiResponseData = null;
       let engineUsed = "DeepSeek AI";
@@ -104,10 +106,10 @@ export const getChemicalInfoFromAI = async (label, lang = 'id') => {
            console.error("Semua AI Eksternal Gagal:", mistralError);
            return {
              name: label,
-             type: "AI Error",
-             composition: `Gagal memanggil DeepSeek maupun Mistral. Pastikan API Key benar dan ada kuotanya.`,
-             chemicals: [{ name: "Gagal Mengambil Data", desc: "API Error" }],
-             hazard: "Koneksi API terputus atau limit habis.",
+             type: "Koneksi Terputus",
+             composition: `Gagal terhubung ke server utama.`,
+             chemicals: [{ name: "Gagal Mengambil Data", desc: "Network Error" }],
+             hazard: "Koneksi sistem terputus.",
              funFact: "Coba pindai ulang dalam beberapa detik."
            };
         }
@@ -120,20 +122,28 @@ export const getChemicalInfoFromAI = async (label, lang = 'id') => {
           const cleanJsonStr = aiResponseData.replace(/```json/g, "").replace(/```/g, "").trim();
           const parsedJSON = JSON.parse(cleanJsonStr);
 
+          // Fungsi pembantu untuk memastikan nilai selalu berupa string
+          const safeString = (val) => {
+            if (!val) return "-";
+            if (typeof val === 'string') return val;
+            if (typeof val === 'object') return Object.entries(val).map(([k, v]) => `${k}: ${v}`).join(", ");
+            return String(val);
+          };
+
           return {
-            name: parsedJSON.name,
-            type: `Generatif AI (${engineUsed})`,
-            composition: parsedJSON.composition,
-            chemicals: parsedJSON.chemicals || [],
-            hazard: parsedJSON.hazard,
-            funFact: parsedJSON.funFact
+            name: safeString(parsedJSON.name),
+            type: `Smart Engine`,
+            composition: safeString(parsedJSON.composition),
+            chemicals: Array.isArray(parsedJSON.chemicals) ? parsedJSON.chemicals : [],
+            hazard: safeString(parsedJSON.hazard),
+            funFact: safeString(parsedJSON.funFact)
           };
         } catch (parseError) {
           console.error("Gagal parse JSON dari AI:", parseError);
           return {
              name: label,
-             type: `AI Parse Error (${engineUsed})`,
-             composition: `AI memberikan format JSON yang rusak.`,
+             type: `System Error`,
+             composition: `Sistem menerima data dengan format yang tidak valid.`,
              chemicals: [],
              hazard: "-",
              funFact: "-"

@@ -1,18 +1,83 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Scanner from './components/Scanner';
 import ProductInfo from './components/ProductInfo';
-import { Database, ShieldCheck, Camera, Globe, MapPin, Building } from 'lucide-react';
+import { Database, ShieldCheck, Camera, Globe, MapPin, Building, Moon, Sun, History, Trash2, ArrowRight } from 'lucide-react';
 import { i18n, languages } from './i18n';
 import './index.css';
 
 function App() {
   const [scanResult, setScanResult] = useState(null);
   const [lang, setLang] = useState('id');
+  const [isLangOpen, setIsLangOpen] = useState(false);
+  const [isDark, setIsDark] = useState(false);
+  const [scanHistory, setScanHistory] = useState([]);
 
-  const t = i18n[lang];
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+      setIsDark(true);
+      document.documentElement.classList.add('dark');
+    }
+    
+    const savedHistory = localStorage.getItem('scanHistory');
+    if (savedHistory) {
+      try {
+        setScanHistory(JSON.parse(savedHistory));
+      } catch (e) {
+        console.error('Error parsing history:', e);
+      }
+    }
+  }, []);
+
+  const toggleDarkMode = () => {
+    setIsDark(!isDark);
+    if (!isDark) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  };
+
+  const t = i18n[lang] || i18n['en'];
+
+  const handleLanguageSelect = (code) => {
+    setLang(code);
+    setIsLangOpen(false);
+    
+    // Map code to Google Translate format if needed
+    const gtCode = code === 'zh' ? 'zh-CN' : code;
+    
+    // Trigger Google Translate widget dynamically without reload
+    const selectEl = document.querySelector('.goog-te-combo');
+    if (selectEl) {
+      selectEl.value = gtCode;
+      selectEl.dispatchEvent(new Event('change'));
+    }
+  };
 
   const handleScanResult = (result) => {
     setScanResult(result);
+    // Add to history
+    if (result && result.name) {
+      const newHistory = [
+        { ...result, date: new Date().toISOString() },
+        ...scanHistory.filter(h => h.name !== result.name)
+      ].slice(0, 10); // Keep last 10
+      setScanHistory(newHistory);
+      localStorage.setItem('scanHistory', JSON.stringify(newHistory));
+    }
+  };
+
+  const clearHistory = () => {
+    setScanHistory([]);
+    localStorage.removeItem('scanHistory');
+  };
+
+  const handleHistoryItemClick = (item) => {
+    setScanResult(item);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleReset = () => {
@@ -20,35 +85,23 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-text-main font-sans">
+    <div className="min-h-screen bg-background text-text-main font-sans transition-colors duration-300">
       
       {/* Navbar */}
       <nav className="bg-surface border-b border-border sticky top-0 z-50 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="bg-primary p-1.5 md:p-2 rounded-lg z-10 bg-white shadow-sm border border-gray-100 shrink-0">
-              <Camera className="w-4 h-4 md:w-5 md:h-5 text-primary" />
-            </div>
-            <div className="marquee-container w-[110px] md:w-[180px]">
-              <span className="text-lg md:text-2xl font-black tracking-widest uppercase rgb-marquee-title">
-                JackScanner
-              </span>
-            </div>
+            <img src="/logo-full.png" alt="JackScanner Logo" className="h-10 sm:h-12 object-contain" />
           </div>
           
-          {/* Language Selector */}
-          <div className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 transition-colors px-3 py-1.5 rounded-full border border-gray-200">
-            <Globe className="w-4 h-4 text-gray-500" />
-            <select 
-              value={lang} 
-              onChange={(e) => setLang(e.target.value)}
-              className="bg-transparent border-none text-sm font-semibold text-gray-700 focus:ring-0 cursor-pointer outline-none appearance-none"
-            >
-              {languages.map(l => (
-                <option key={l.code} value={l.code}>{l.name} ({l.code.toUpperCase()})</option>
-              ))}
-            </select>
-          </div>
+          {/* Dark Mode Toggle */}
+          <button 
+            onClick={toggleDarkMode} 
+            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            title="Toggle Dark Mode"
+          >
+            {isDark ? <Sun className="w-5 h-5 text-yellow-500" /> : <Moon className="w-5 h-5 text-text-muted" />}
+          </button>
         </div>
       </nav>
 
@@ -73,8 +126,8 @@ function App() {
                   <Database className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-text-main text-lg">Wikidata Knowledge Graph</h3>
-                  <p className="text-sm text-text-muted mt-1 leading-relaxed">Cross-lingual entity mapping using Wikidata to accurately identify materials regardless of your language choice.</p>
+                  <h3 className="font-semibold text-text-main text-lg">{t.wikiGraphTitle || "Wikidata Knowledge Graph"}</h3>
+                  <p className="text-sm text-text-muted mt-1 leading-relaxed">{t.wikiGraphDesc || "Cross-lingual entity mapping using Wikidata to accurately identify materials regardless of your language choice."}</p>
                 </div>
               </div>
               <div className="card p-5 flex items-start gap-4">
@@ -82,15 +135,54 @@ function App() {
                   <ShieldCheck className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-text-main text-lg">Wikipedia Integration</h3>
-                  <p className="text-sm text-text-muted mt-1 leading-relaxed">Pulling factual, reliable encyclopedia extracts directly via the Wikipedia REST API without relying on flaky AI text generators.</p>
+                  <h3 className="font-semibold text-text-main text-lg">{t.wikiIntegTitle || "Wikipedia Integration"}</h3>
+                  <p className="text-sm text-text-muted mt-1 leading-relaxed">{t.wikiIntegDesc || "Pulling factual, reliable encyclopedia extracts directly via the Wikipedia REST API without relying on flaky AI text generators."}</p>
                 </div>
               </div>
+            </div>
+
+            {/* Scan History Section - Moved to Left Column */}
+            <div className="card p-6 mt-8 tour-history">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-bold text-lg flex items-center gap-2">
+                  <History className="w-5 h-5 text-primary" />
+                  {t.historyTitle || "Riwayat Scan"}
+                </h3>
+                {scanHistory.length > 0 && (
+                  <button onClick={clearHistory} className="text-sm text-red-500 hover:text-red-700 flex items-center gap-1">
+                    <Trash2 className="w-4 h-4" /> {t.clearHistory || "Hapus"}
+                  </button>
+                )}
+              </div>
+              
+              {scanHistory.length === 0 ? (
+                <div className="text-center py-6 bg-background rounded-lg border border-dashed border-border">
+                  <p className="text-text-muted text-sm">Belum ada riwayat. Yuk coba scan barang di sekitarmu!</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {scanHistory.map((item, idx) => (
+                    <div 
+                      key={idx} 
+                      onClick={() => handleHistoryItemClick(item)}
+                      className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-background cursor-pointer transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        {item.imageUrl && (
+                          <img src={item.imageUrl} alt={item.name} className="w-10 h-10 object-cover rounded bg-gray-200 dark:bg-gray-700" />
+                        )}
+                        <span className="font-semibold text-text-main capitalize">{item.name}</span>
+                      </div>
+                      <ArrowRight className="w-4 h-4 text-text-muted" />
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
           {/* Right Column: Scanner / Result */}
-          <div className="lg:col-span-7 order-1 lg:order-2">
+          <div className="lg:col-span-7 order-1 lg:order-2 tour-scanner">
             {!scanResult ? (
               <div className="animate-fade-in-up" style={{animationDelay: '0.2s'}}>
                 <Scanner onScanResult={handleScanResult} lang={lang} />
@@ -105,12 +197,12 @@ function App() {
         {/* Developer Profile Section (Company Profile Style) */}
         <div className="mt-20 pt-16 border-t border-border animate-fade-in-up" style={{animationDelay: '0.4s'}}>
           <div className="text-center mb-10">
-            <h2 className="text-3xl font-extrabold text-text-main">Developer Profile</h2>
-            <p className="text-text-muted mt-2 text-lg">Mengenal lebih dekat pembuat aplikasi ini</p>
+            <h2 className="text-3xl font-extrabold text-text-main">{t.profile?.devTitle || "Developer Profile"}</h2>
+            <p className="text-text-muted mt-2 text-lg">{t.profile?.devSubtitle || "Mengenal lebih dekat pembuat aplikasi ini"}</p>
           </div>
           
-          <div className="max-w-4xl mx-auto card p-8 md:p-12 flex flex-col md:flex-row items-center gap-10 bg-gradient-to-br from-white to-blue-50/50 shadow-xl border-primary/10">
-            <div className="relative w-48 h-48 rounded-full overflow-hidden shrink-0 border-4 border-white shadow-lg bg-gray-100 flex items-center justify-center">
+          <div className="max-w-4xl mx-auto card p-8 md:p-12 flex flex-col md:flex-row items-center gap-10 bg-gradient-to-br from-surface to-blue-50/50 dark:to-blue-900/20 shadow-xl border-primary/10">
+            <div className="relative w-48 h-48 rounded-full overflow-hidden shrink-0 border-4 border-surface shadow-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
               <img 
                 src="/profile.jpg" 
                 alt="Developer Profile" 
@@ -121,11 +213,9 @@ function App() {
             <div className="text-center md:text-left flex-1">
               <div className="flex flex-col md:flex-row items-center gap-3 mb-3">
                 <h3 className="font-bold text-text-main text-3xl">si.palingjack</h3>
-                <span className="bg-primary/10 text-primary text-sm font-bold px-3 py-1 rounded-full">Lead Developer</span>
+                <span className="bg-primary/10 text-primary text-sm font-bold px-3 py-1 rounded-full">{t.profile?.leadDev || "Lead Developer"}</span>
               </div>
-              <p className="text-text-muted mt-4 leading-relaxed text-lg">
-                Mahasiswa semester 2 di program studi <b>Sistem Informasi</b>, dari <b>Universitas Bina Sarana Informatika</b>. Berkomitmen untuk terus belajar dan menciptakan solusi teknologi yang bermanfaat dan inovatif.
-              </p>
+              <p className="text-text-muted mt-4 leading-relaxed text-lg" dangerouslySetInnerHTML={{ __html: t.profile?.devDesc || "Mahasiswa semester 2 di program studi <b>Sistem Informasi</b>, dari <b>Universitas Bina Sarana Informatika</b>. Berkomitmen untuk terus belajar dan menciptakan solusi teknologi yang bermanfaat dan inovatif." }} />
               
               <div className="mt-8 flex flex-wrap justify-center md:justify-start gap-3">
                 <a 
@@ -145,7 +235,7 @@ function App() {
                   href="https://fxcomunity.vercel.app" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-800 text-sm font-bold rounded-xl hover:bg-gray-50 transition-all shadow-sm hover:shadow-md active:scale-95"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-surface border border-border text-text-main text-sm font-bold rounded-xl hover:bg-background transition-all shadow-sm hover:shadow-md active:scale-95"
                 >
                   <img src="https://www.google.com/s2/favicons?domain=fxcomunity.vercel.app&sz=64" alt="FX Comunity" className="w-5 h-5 rounded-full" />
                   FX Comunity
@@ -156,7 +246,7 @@ function App() {
                   href="https://vallbot.vercel.app" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-800 text-sm font-bold rounded-xl hover:bg-gray-50 transition-all shadow-sm hover:shadow-md active:scale-95"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-surface border border-border text-text-main text-sm font-bold rounded-xl hover:bg-background transition-all shadow-sm hover:shadow-md active:scale-95"
                 >
                   <img src="https://www.google.com/s2/favicons?domain=vallbot.vercel.app&sz=64" alt="Vallbot" className="w-5 h-5 rounded-full" />
                   Vallbot
@@ -181,9 +271,9 @@ function App() {
 
         {/* UBSI Profile Section */}
         <div className="mt-10">
-          <div className="max-w-4xl mx-auto card p-8 md:p-10 flex flex-col items-center gap-6 bg-white shadow-xl border-primary/10">
+          <div className="max-w-4xl mx-auto card p-8 md:p-10 flex flex-col items-center gap-6 bg-surface shadow-xl border-primary/10">
             <div className="flex flex-col md:flex-row items-center md:items-start gap-8 w-full">
-              <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden shrink-0 border-4 border-white shadow-lg bg-gray-50 flex items-center justify-center p-2">
+              <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden shrink-0 border-4 border-surface shadow-lg bg-background flex items-center justify-center p-2">
                 <img 
                   src="/logo-ubsi.png" 
                   alt="Logo UBSI" 
@@ -194,20 +284,20 @@ function App() {
               <div className="text-center md:text-left flex-1">
                 <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-sm font-semibold mb-3">
                   <Building className="w-4 h-4" />
-                  Profil Kampus
+                  {t.profile?.campusTitle || "Profil Kampus"}
                 </div>
                 <h2 className="text-2xl md:text-3xl font-extrabold text-text-main leading-tight">
-                  Universitas Bina Sarana Informatika
+                  {t.profile?.campusName || "Universitas Bina Sarana Informatika"}
                 </h2>
                 <h3 className="text-lg md:text-xl font-semibold text-primary mt-1">
-                  Kampus Cengkareng (UBSI)
+                  {t.profile?.campusBranch || "Kampus Cengkareng (UBSI)"}
                 </h3>
                 <p className="text-text-muted mt-3 leading-relaxed">
-                  BSI Cengkareng merupakan salah satu kampus Universitas Bina Sarana Informatika yang berlokasi strategis di Jakarta Barat. Berfokus pada pendidikan berkualitas di bidang Teknologi Informasi dan Bisnis dengan fasilitas penunjang untuk menciptakan generasi mandiri dan inovatif.
+                  {t.profile?.campusDesc || "BSI Cengkareng merupakan salah satu kampus Universitas Bina Sarana Informatika yang berlokasi strategis di Jakarta Barat. Berfokus pada pendidikan berkualitas di bidang Teknologi Informasi dan Bisnis dengan fasilitas penunjang untuk menciptakan generasi mandiri dan inovatif."}
                 </p>
-                <div className="flex items-start gap-2 mt-4 text-sm text-gray-600">
+                <div className="flex items-start gap-2 mt-4 text-sm text-text-muted">
                   <MapPin className="w-5 h-5 shrink-0 text-red-500 mt-0.5" />
-                  <span>Jl. Kamal Raya No.18, RT.6/RW.3, Cengkareng Bar., Kecamatan Cengkareng, Kota Jakarta Barat, Daerah Khusus Ibukota Jakarta 11730</span>
+                  <span>{t.profile?.address || "Jl. Kamal Raya No.18, RT.6/RW.3, Cengkareng Bar., Kecamatan Cengkareng, Kota Jakarta Barat, Daerah Khusus Ibukota Jakarta 11730"}</span>
                 </div>
               </div>
             </div>
@@ -235,14 +325,121 @@ function App() {
             <Camera className="w-5 h-5 text-text-muted" />
             <span className="font-semibold text-text-main">JackScanner &copy; 2026</span>
           </div>
-          <div className="text-sm text-text-muted">
-            Powered by MobileNet, Wikidata, and Wikipedia REST API.
+          <div className="text-sm text-text-muted text-center md:text-right flex flex-col items-center md:items-end">
+            <p>Developer By <a href="https://wa.me/62895404147521" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">Jack</a></p>
+            <p className="mt-2 text-xs font-semibold text-text-main">Assisted by Artificial Intelligence:</p>
+            <div className="text-xs mt-1 space-y-0.5 text-center md:text-right">
+              <p>1. Gemini AI</p>
+              <p>2. Open AI</p>
+              <p>3. DeepSeek AI</p>
+              <p>4. Mistral AI</p>
+            </div>
           </div>
         </div>
       </footer>
+
+      {/* Hidden Google Translate Element */}
+      <div id="google_translate_element" className="hidden"></div>
+
+      {/* Floating Buttons: WhatsApp & Google Translate */}
+      <div className="fixed bottom-10 right-4 md:right-10 z-[100] flex flex-col items-end">
+        {/* WhatsApp Button */}
+        <a 
+          href="https://wa.me/62895404147521" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="whatsapp-pop-in mb-4 w-14 h-14 bg-[#25D366] rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all relative group"
+          style={{ boxShadow: '0 10px 25px -5px rgba(37, 211, 102, 0.4)' }}
+          title="Chat WhatsApp"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="white" viewBox="0 0 16 16">
+            <path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z"/>
+          </svg>
+          
+          {/* Notification Badge */}
+          <span className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center z-10">
+            <span className="whatsapp-badge-pulse absolute inline-flex rounded-full h-[22px] w-[22px] bg-[#FF3B30] text-white text-[13px] font-[800] items-center justify-center border-[2.5px] border-white shadow-sm font-sans leading-none">
+              1
+            </span>
+          </span>
+        </a>
+
+        {isLangOpen && (
+          <div className="mb-4 bg-surface rounded-2xl shadow-2xl border border-border p-2 animate-fade-in-up max-h-[60vh] overflow-y-auto w-56 transform origin-bottom-right">
+            <div className="px-3 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider mb-1 border-b border-gray-100">
+              Google Terjemahan
+            </div>
+            {languages.map(l => (
+              <button
+                key={l.code}
+                onClick={() => handleLanguageSelect(l.code)}
+                className={`w-full text-left px-3 py-2.5 text-sm flex items-center gap-3 hover:bg-blue-50 rounded-xl transition-all ${lang === l.code ? 'bg-blue-50/80 text-blue-600 font-bold' : 'text-gray-700 font-medium'}`}
+              >
+                <img src={`https://flagcdn.com/w20/${l.country}.png`} alt={l.name} className="w-5 h-auto rounded-sm shadow-sm" />
+                {l.name}
+              </button>
+            ))}
+          </div>
+        )}
+        
+        <button 
+          onClick={() => setIsLangOpen(!isLangOpen)}
+          className="tour-lang w-14 h-14 bg-surface rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all border border-border group relative overflow-hidden"
+          style={{ boxShadow: '0 10px 25px -5px rgba(66, 133, 244, 0.4)' }}
+        >
+          <div className="absolute inset-0 bg-blue-50 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          <img 
+            src="https://upload.wikimedia.org/wikipedia/commons/d/d7/Google_Translate_logo.svg" 
+            alt="Google Translate" 
+            className="w-8 h-8 relative z-10"
+          />
+        </button>
+      </div>
 
     </div>
   );
 }
 
-export default App;
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error("React Error Boundary Caught:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-red-50 p-10 flex flex-col items-center justify-center font-mono">
+          <h1 className="text-3xl font-bold text-red-600 mb-4">Aplikasi Mengalami Crash</h1>
+          <p className="text-red-800 mb-4">Berikut adalah pesan error-nya:</p>
+          <pre className="bg-red-100 p-4 rounded-lg text-red-900 w-full max-w-4xl overflow-x-auto">
+            {this.state.error?.toString()}
+          </pre>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="mt-8 px-6 py-2 bg-red-600 text-white rounded-lg font-bold"
+          >
+            Muat Ulang Halaman
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+export default function AppWithErrorBoundary() {
+  return (
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
+  );
+}
