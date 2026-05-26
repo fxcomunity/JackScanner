@@ -5,7 +5,7 @@ import { Html5QrcodeScanner, Html5QrcodeScanType } from 'html5-qrcode';
 import { i18n } from '../i18n';
 import { playBeep, playShutter } from '../utils/audio';
 
-const Scanner = ({ onScanResult, lang }) => {
+const Scanner = ({ onScanResult, lang, onUrlDetected }) => {
   const webcamRef = useRef(null);
   const [isScanning, setIsScanning] = useState(false);
   const [cameraError, setCameraError] = useState(false);
@@ -20,6 +20,15 @@ const Scanner = ({ onScanResult, lang }) => {
 
   const handleBarcodeDetected = async (text) => {
     playBeep();
+    
+    // Check if it's a URL/QR Code
+    if (text.startsWith('http://') || text.startsWith('https://') || text.includes('.com') || text.includes('.net') || text.includes('.org') || text.includes('.id')) {
+      if (onUrlDetected) {
+        onUrlDetected(text);
+        return;
+      }
+    }
+
     setIsScanning(true);
     try {
       const apiKey = import.meta.env.VITE_GEMINI_API_KEY;

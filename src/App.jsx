@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Scanner from './components/Scanner';
 import ProductInfo from './components/ProductInfo';
-import { Database, ShieldCheck, Camera, Globe, MapPin, Building, Moon, Sun, History, Trash2, ArrowRight } from 'lucide-react';
+import CyberScanner from './components/CyberScanner';
+import { Database, ShieldCheck, Camera, Globe, MapPin, Building, Moon, Sun, History, Trash2, ArrowRight, Search, Star, Terminal, Download, X } from 'lucide-react';
 import { i18n, languages } from './i18n';
 import './index.css';
 
@@ -11,6 +12,11 @@ function App() {
   const [isLangOpen, setIsLangOpen] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const [scanHistory, setScanHistory] = useState([]);
+  const [historySearch, setHistorySearch] = useState('');
+  
+  // PWA Install Prompt State
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [showInstallPopup, setShowInstallPopup] = useState(false);
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
@@ -27,7 +33,47 @@ function App() {
         console.error('Error parsing history:', e);
       }
     }
+
+    // PWA Prompt Listener
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    
+    // Always show popup for UI demonstration if not dismissed
+    const timer = setTimeout(() => {
+      const hasDismissed = sessionStorage.getItem('dismissedInstallPopup');
+      if (!hasDismissed) {
+        setShowInstallPopup(true);
+      }
+    }, 2500);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      clearTimeout(timer);
+    };
   }, []);
+
+  const dismissPopup = () => {
+    setShowInstallPopup(false);
+    sessionStorage.setItem('dismissedInstallPopup', 'true');
+  };
+
+  const handleInstallClick = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        console.log('User installed the PWA');
+      }
+      setDeferredPrompt(null);
+    } else {
+      alert("Browser Anda mungkin sudah menginstall aplikasi ini, atau silahkan gunakan menu browser (titik tiga) -> 'Tambahkan ke Layar Utama / Install App'.");
+    }
+    dismissPopup();
+  };
 
   const toggleDarkMode = () => {
     setIsDark(!isDark);
@@ -81,8 +127,21 @@ function App() {
   };
 
   const clearHistory = () => {
-    setScanHistory([]);
-    localStorage.removeItem('scanHistory');
+    const favorites = scanHistory.filter(h => h.isFavorite);
+    setScanHistory(favorites);
+    if (favorites.length > 0) {
+      localStorage.setItem('scanHistory', JSON.stringify(favorites));
+    } else {
+      localStorage.removeItem('scanHistory');
+    }
+  };
+
+  const toggleFavorite = (e, idx) => {
+    e.stopPropagation();
+    const newHistory = [...scanHistory];
+    newHistory[idx].isFavorite = !newHistory[idx].isFavorite;
+    setScanHistory(newHistory);
+    localStorage.setItem('scanHistory', JSON.stringify(newHistory));
   };
 
   const handleHistoryItemClick = (item) => {
@@ -165,19 +224,42 @@ function App() {
                 )}
               </div>
               
+              {scanHistory.length > 0 && (
+                <div className="mb-4 relative">
+                  <input 
+                    type="text" 
+                    placeholder="Cari riwayat..." 
+                    value={historySearch}
+                    onChange={(e) => setHistorySearch(e.target.value)}
+                    className="w-full pl-9 pr-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:border-primary text-sm"
+                  />
+                  <Search className="w-4 h-4 text-text-muted absolute left-3 top-2.5" />
+                </div>
+              )}
+
               {scanHistory.length === 0 ? (
                 <div className="text-center py-6 bg-background rounded-lg border border-dashed border-border">
                   <p className="text-text-muted text-sm">Belum ada riwayat. Yuk coba scan barang di sekitarmu!</p>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {scanHistory.map((item, idx) => (
+                  {scanHistory
+                    .map((item, originalIndex) => ({ item, originalIndex }))
+                    .filter(({ item }) => item.name.toLowerCase().includes(historySearch.toLowerCase()))
+                    .map(({ item, originalIndex }) => (
                     <div 
-                      key={idx} 
+                      key={originalIndex} 
                       onClick={() => handleHistoryItemClick(item)}
                       className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-background cursor-pointer transition-colors"
                     >
                       <div className="flex items-center gap-3">
+                        <button 
+                          onClick={(e) => toggleFavorite(e, originalIndex)}
+                          className="p-1 -ml-1 focus:outline-none"
+                          title={item.isFavorite ? "Hapus dari Favorit" : "Tambahkan ke Favorit"}
+                        >
+                          <Star className={`w-5 h-5 transition-colors ${item.isFavorite ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300 hover:text-yellow-400'}`} />
+                        </button>
                         {item.imageUrl && (
                           <img src={item.imageUrl} alt={item.name} className="w-10 h-10 object-cover rounded bg-gray-200 dark:bg-gray-700" />
                         )}
@@ -186,6 +268,12 @@ function App() {
                       <ArrowRight className="w-4 h-4 text-text-muted" />
                     </div>
                   ))}
+                  
+                  {scanHistory.length > 0 && scanHistory.filter(item => item.name.toLowerCase().includes(historySearch.toLowerCase())).length === 0 && (
+                    <div className="text-center py-4">
+                      <p className="text-text-muted text-sm">Tidak ada hasil yang cocok.</p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -337,6 +425,22 @@ function App() {
             </div>
           </div>
         </div>
+
+        {/* Cyber Recon Section */}
+        <div className="mt-10" id="cyber-recon">
+          <div className="max-w-5xl mx-auto card p-6 md:p-10 bg-[#020617] text-green-400 border-green-500/20 shadow-[0_0_20px_rgba(34,197,94,0.1)]">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-extrabold text-white flex justify-center items-center gap-3 tracking-wider">
+                <Terminal className="w-8 h-8 text-green-500" />
+                CYBER RECON SCANNER
+              </h2>
+              <p className="text-green-500/70 mt-2 font-mono">Passive recon, vulnerability check & URL malware detection</p>
+            </div>
+            
+            <CyberScanner />
+          </div>
+        </div>
+
       </main>
 
       {/* Footer */}
@@ -416,6 +520,44 @@ function App() {
           />
         </button>
       </div>
+
+      {/* PWA Custom Install Popup */}
+      {showInstallPopup && (
+        <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 bg-gray-900 border border-green-500/30 text-white p-4 rounded-xl shadow-2xl z-50 animate-fade-in-up">
+          <button 
+            onClick={dismissPopup}
+            className="absolute top-2 right-2 text-gray-400 hover:text-white"
+          >
+            <X className="w-5 h-5" />
+          </button>
+          
+          <div className="flex gap-4 items-start">
+            <div className="bg-green-500/20 p-3 rounded-xl shrink-0">
+              <Download className="w-6 h-6 text-green-400" />
+            </div>
+            <div>
+              <h4 className="font-bold text-lg mb-1">Install JackScanner App</h4>
+              <p className="text-sm text-gray-400 mb-4 leading-relaxed">
+                Tambahkan aplikasi ini ke layar utama HP Anda agar bisa diakses lebih cepat, *offline*, dan tanpa *browser*!
+              </p>
+              <div className="flex gap-2">
+                <button 
+                  onClick={handleInstallClick}
+                  className="bg-green-600 hover:bg-green-500 text-black font-bold py-2 px-4 rounded-lg flex-1 transition-colors"
+                >
+                  Install Sekarang
+                </button>
+                <button 
+                  onClick={dismissPopup}
+                  className="bg-gray-800 hover:bg-gray-700 text-gray-300 font-bold py-2 px-4 rounded-lg transition-colors"
+                >
+                  Nanti Saja
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
