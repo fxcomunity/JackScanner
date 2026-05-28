@@ -1273,11 +1273,24 @@ function App() {
             <div className="p-6 overflow-y-auto space-y-6">
               <div className="relative pl-6 border-l-2 border-primary/30 space-y-6">
                 
-                {/* v0.0.3 */}
+                {/* v0.0.4 */}
                 <div className="relative">
                   <div className="absolute -left-[31px] top-0 w-4 h-4 bg-primary rounded-full border-4 border-surface shadow-md"></div>
                   <h3 className="font-bold text-text-main flex items-center gap-2">
-                    Versi 0.0.3 <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold">Terbaru</span>
+                    Versi 0.0.4 <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold">Terbaru</span>
+                  </h3>
+                  <ul className="mt-2 space-y-1.5">
+                    <li className="text-sm text-text-muted flex gap-2"><CheckCircle2 className="w-4 h-4 text-green-500 shrink-0 mt-0.5" /> UI Sidebar Hamburger Menu</li>
+                    <li className="text-sm text-text-muted flex gap-2"><CheckCircle2 className="w-4 h-4 text-green-500 shrink-0 mt-0.5" /> Desain UI Spotify Mini Player</li>
+                    <li className="text-sm text-text-muted flex gap-2"><CheckCircle2 className="w-4 h-4 text-green-500 shrink-0 mt-0.5" /> Cheat Code rahasia Owner Mode</li>
+                  </ul>
+                </div>
+
+                {/* v0.0.3 */}
+                <div className="relative">
+                  <div className="absolute -left-[31px] top-0 w-4 h-4 bg-gray-300 dark:bg-gray-600 rounded-full border-4 border-surface shadow-md"></div>
+                  <h3 className="font-bold text-text-main flex items-center gap-2">
+                    Versi 0.0.3
                   </h3>
                   <ul className="mt-2 space-y-1.5">
                     <li className="text-sm text-text-muted flex gap-2"><CheckCircle2 className="w-4 h-4 text-green-500 shrink-0 mt-0.5" /> Sistem Gamification (XP & Level)</li>
