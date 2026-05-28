@@ -3,14 +3,14 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import './index.css'
 import App from './App.jsx'
-import NotFound from './components/NotFound.jsx'
+import NotFound404 from './components/errors/NotFound404.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<App />} />
-        <Route path="*" element={<NotFound />} />
+        <Route path="*" element={<NotFound404 />} />
       </Routes>
     </BrowserRouter>
   </StrictMode>,

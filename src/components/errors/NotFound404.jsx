@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { SearchX, Home, ArrowLeft } from 'lucide-react';
 
-const NotFound = () => {
+const NotFound404 = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-center animate-fade-in-up">
       <div className="relative mb-8">
@@ -38,4 +38,4 @@ const NotFound = () => {
   );
 };
 
-export default NotFound;
+export default NotFound404;

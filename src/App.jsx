@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import Scanner from './components/Scanner';
 import ProductInfo from './components/ProductInfo';
 import CyberScanner from './components/CyberScanner';
-import { Database, ShieldCheck, Camera, Globe, MapPin, Building, Moon, Sun, History, Trash2, ArrowRight, Search, Star, Terminal, Download, Upload, X, Zap, CheckCircle2, AlertTriangle, Info, Bell, Award, Eye, Trophy, Medal } from 'lucide-react';
+import { Database, ShieldCheck, Camera, Globe, MapPin, Building, Moon, Sun, History, Trash2, ArrowRight, Search, Star, Terminal, Download, Upload, X, Zap, CheckCircle2, AlertTriangle, Info, Bell, Award, Eye, Trophy, Medal, WifiOff } from 'lucide-react';
 import { i18n, languages } from './i18n';
+import OfflineOverlay from './components/errors/OfflineOverlay';
+import ServerError500 from './components/errors/ServerError500';
 import jsPDF from "jspdf";
 import './index.css';
 const APP_VERSION = '0.0.3';
@@ -20,6 +22,9 @@ function App() {
   // PWA Install Prompt State
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showInstallPopup, setShowInstallPopup] = useState(false);
+  
+  // Offline State
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
   
   // Global Popup State
   const [popup, setPopup] = useState(null);
@@ -128,8 +133,16 @@ function App() {
       }
     }, 2500);
 
+    // Offline Listener
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
       clearTimeout(timer);
     };
   }, []);
@@ -231,7 +244,12 @@ function App() {
   };
 
   const handleWAReport = () => {
-    let reportText = "";
+    let reportData = {
+      name: "",
+      category: "BUG",
+      details: ""
+    };
+    
     showPopup({
       type: 'confirm',
       title: 'Kirim Laporan / Pesan',
@@ -239,21 +257,45 @@ function App() {
       confirmText: 'Kirim via WA',
       cancelText: 'Batal',
       content: (
-        <div className="space-y-3">
-          <p className="text-sm text-text-muted">Apa yang ingin kamu sampaikan ke Developer?</p>
-          <textarea 
-            className="w-full p-3 rounded-lg border border-border bg-surface text-text-main text-sm focus:outline-none focus:ring-2 focus:ring-primary h-24"
-            placeholder="Ketik pesan, laporan bug, atau saran di sini..."
-            onChange={(e) => reportText = e.target.value}
-          ></textarea>
+        <div className="space-y-4">
+          <p className="text-sm text-text-muted">Bantu kami menjadi lebih baik dengan mengirimkan masukanmu.</p>
+          <div>
+            <label className="block text-xs font-bold text-text-main mb-1">Nama:</label>
+            <input 
+              type="text" 
+              className="w-full p-2.5 rounded-lg border border-border bg-surface text-text-main text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              placeholder="Masukkan nama kamu..."
+              onChange={(e) => reportData.name = e.target.value}
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-text-main mb-1">Kategori:</label>
+            <select 
+              className="w-full p-2.5 rounded-lg border border-border bg-surface text-text-main text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              onChange={(e) => reportData.category = e.target.value}
+            >
+              <option value="BUG">Laporan BUG / Error</option>
+              <option value="SARAN">Saran Fitur Baru</option>
+              <option value="PERTANYAAN">Pertanyaan</option>
+              <option value="LAINNYA">Lainnya</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-text-main mb-1">Penjelasan Lebih Lanjut:</label>
+            <textarea 
+              className="w-full p-2.5 rounded-lg border border-border bg-surface text-text-main text-sm focus:outline-none focus:ring-2 focus:ring-primary h-24"
+              placeholder="Ketik penjelasan detail di sini..."
+              onChange={(e) => reportData.details = e.target.value}
+            ></textarea>
+          </div>
         </div>
       ),
       onConfirm: () => {
-        if (!reportText.trim()) {
-          alert("Pesan tidak boleh kosong!");
+        if (!reportData.name.trim() || !reportData.details.trim()) {
+          alert("Nama dan Penjelasan tidak boleh kosong!");
           return;
         }
-        const template = `Halo Annas,\n\nSaya pengguna aplikasi *JackScanner Ultimate (v${APP_VERSION})*.\n\nSaya ingin menyampaikan pesan / laporan berikut:\n\n"${reportText.trim()}"\n\nTerima kasih!`;
+        const template = `Halo Annas,\n\nSaya pengguna aplikasi *JackScanner Ultimate (v${APP_VERSION})*.\n\nBerikut adalah laporan / pesan dari saya:\n\n*Nama:* ${reportData.name.trim()}\n*Kategori:* ${reportData.category}\n*Penjelasan Lebih Lanjut:*\n"${reportData.details.trim()}"\n\nTerima kasih!`;
         const waUrl = `https://wa.me/62895404147521?text=${encodeURIComponent(template)}`;
         window.open(waUrl, '_blank');
         closePopup();
@@ -1080,6 +1122,9 @@ function App() {
         </div>
       )}
 
+      {/* Offline Overlay */}
+      <OfflineOverlay isOffline={isOffline} />
+
     </div>
   );
 }
@@ -1100,21 +1145,7 @@ class ErrorBoundary extends React.Component {
 
   render() {
     if (this.state.hasError) {
-      return (
-        <div className="min-h-screen bg-red-50 p-10 flex flex-col items-center justify-center font-mono">
-          <h1 className="text-3xl font-bold text-red-600 mb-4">Aplikasi Mengalami Crash</h1>
-          <p className="text-red-800 mb-4">Berikut adalah pesan error-nya:</p>
-          <pre className="bg-red-100 p-4 rounded-lg text-red-900 w-full max-w-4xl overflow-x-auto">
-            {this.state.error?.toString()}
-          </pre>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="mt-8 px-6 py-2 bg-red-600 text-white rounded-lg font-bold"
-          >
-            Muat Ulang Halaman
-          </button>
-        </div>
-      );
+      return <ServerError500 error={this.state.error} />;
     }
     return this.props.children;
   }
