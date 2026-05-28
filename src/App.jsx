@@ -947,9 +947,6 @@ function App() {
 
       {/* Floating Buttons */}
       <div className="fixed bottom-10 right-4 md:right-10 z-[100] flex flex-col items-end gap-3">
-        
-        <SoundMenu />
-
         <SoundMenu />
       </div>
 
