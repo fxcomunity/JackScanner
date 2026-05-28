@@ -188,9 +188,9 @@ const Scanner = ({ onScanResult, lang, onUrlDetected, onTextExtracted }) => {
         if (onTextExtracted) onTextExtracted(data.candidates[0].content.parts[0].text);
       } else {
         const detectedLabel = data.candidates[0].content.parts[0].text.trim().toLowerCase();
-        // Mengirim hasil prediksi tunggal
+        // Mengirim hasil prediksi tunggal beserta gambar yang discan
         if (detectedLabel) {
-          onScanResult([{ className: detectedLabel, probability: 0.99 }]);
+          onScanResult([{ className: detectedLabel, probability: 0.99, image: base64DataWithPrefix }]);
         }
       }
     } catch (err) {

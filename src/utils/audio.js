@@ -1,27 +1,48 @@
-export const playBeep = () => {
+export const playBeep = (type = 'classic') => {
+  if (localStorage.getItem('isSoundOn') === 'false') return;
   try {
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const oscillator = audioCtx.createOscillator();
     const gainNode = audioCtx.createGain();
 
-    oscillator.type = 'sine';
-    oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // A5 note
-    
-    gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
-    gainNode.gain.linearRampToValueAtTime(0.5, audioCtx.currentTime + 0.05);
-    gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.15);
+    if (type === 'retro') {
+      oscillator.type = 'square';
+      oscillator.frequency.setValueAtTime(440, audioCtx.currentTime);
+      oscillator.frequency.setValueAtTime(880, audioCtx.currentTime + 0.1);
+      gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+      gainNode.gain.linearRampToValueAtTime(0.1, audioCtx.currentTime + 0.05);
+      gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.2);
+      oscillator.start(audioCtx.currentTime);
+      oscillator.stop(audioCtx.currentTime + 0.2);
+    } else if (type === 'modern') {
+      oscillator.type = 'triangle';
+      oscillator.frequency.setValueAtTime(1200, audioCtx.currentTime);
+      oscillator.frequency.exponentialRampToValueAtTime(400, audioCtx.currentTime + 0.15);
+      gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+      gainNode.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.02);
+      gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.15);
+      oscillator.start(audioCtx.currentTime);
+      oscillator.stop(audioCtx.currentTime + 0.15);
+    } else {
+      // Classic
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
+      gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+      gainNode.gain.linearRampToValueAtTime(0.5, audioCtx.currentTime + 0.05);
+      gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.15);
+      oscillator.start(audioCtx.currentTime);
+      oscillator.stop(audioCtx.currentTime + 0.15);
+    }
 
     oscillator.connect(gainNode);
     gainNode.connect(audioCtx.destination);
-
-    oscillator.start(audioCtx.currentTime);
-    oscillator.stop(audioCtx.currentTime + 0.15);
   } catch (e) {
     console.warn("AudioContext tidak didukung", e);
   }
 };
 
 export const playShutter = () => {
+  if (localStorage.getItem('isSoundOn') === 'false') return;
   try {
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     
@@ -56,6 +77,7 @@ export const playShutter = () => {
 };
 
 export const speakText = (text, lang = 'id-ID') => {
+  if (localStorage.getItem('isSoundOn') === 'false') return;
   if (!('speechSynthesis' in window)) {
     console.warn("Web Speech API tidak didukung");
     alert("Maaf, browser Anda tidak mendukung fitur Text-to-Speech.");

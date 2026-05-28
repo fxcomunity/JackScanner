@@ -23,6 +23,15 @@ export default {
       boxShadow: {
         'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
         'float': '0 10px 40px -10px rgba(0, 0, 0, 0.08)',
+      },
+      animation: {
+        'progress-bar': 'progress 2.5s ease-in-out forwards',
+      },
+      keyframes: {
+        progress: {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(0)' },
+        }
       }
     },
   },

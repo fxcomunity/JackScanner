@@ -2,10 +2,13 @@ import React, { useState, useEffect } from 'react';
 import Scanner from './components/Scanner';
 import ProductInfo from './components/ProductInfo';
 import CyberScanner from './components/CyberScanner';
-import { Database, ShieldCheck, Camera, Globe, MapPin, Building, Moon, Sun, History, Trash2, ArrowRight, Search, Star, Terminal, Download, Upload, X, Zap, CheckCircle2, AlertTriangle, Info, Bell, Award, Eye, Trophy, Medal, WifiOff } from 'lucide-react';
+import { Database, ShieldCheck, Camera, Globe, MapPin, Building, Moon, Sun, History, Trash2, ArrowRight, Search, Star, Terminal, Download, Upload, X, Zap, CheckCircle2, AlertTriangle, Info, Bell, Award, Eye, Trophy, Medal, WifiOff, Volume2, VolumeX, Music } from 'lucide-react';
 import { i18n, languages } from './i18n';
 import OfflineOverlay from './components/errors/OfflineOverlay';
 import ServerError500 from './components/errors/ServerError500';
+import OnlineToast from './components/errors/OnlineToast';
+import SplashScreen from './components/SplashScreen';
+import SoundMenu from './components/SoundMenu';
 import jsPDF from "jspdf";
 import './index.css';
 const APP_VERSION = '0.0.3';
@@ -19,12 +22,16 @@ function App() {
   const [historySearch, setHistorySearch] = useState('');
   const [extractedText, setExtractedText] = useState(null);
   
+  // Splash Screen State
+  const [showSplash, setShowSplash] = useState(true);
+  
   // PWA Install Prompt State
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showInstallPopup, setShowInstallPopup] = useState(false);
   
   // Offline State
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  const [showOnlineToast, setShowOnlineToast] = useState(false);
   
   // Global Popup State
   const [popup, setPopup] = useState(null);
@@ -35,11 +42,11 @@ function App() {
   // Gamification State
   const DEFAULT_PROFILE = { xp: 0, level: 1, totalScans: 0, badges: [] };
   const BADGES_DB = [
-    { id: 'first_scan', title: 'Pendeteksi Pemula', desc: 'Melakukan scan pertama kalinya', req: 1, icon: 'Star' },
-    { id: 'five_scans', title: 'Pengamat Jeli', desc: 'Melakukan 5x scan barang', req: 5, icon: 'Eye' },
-    { id: 'ten_scans', title: 'Mata Elang', desc: 'Melakukan 10x scan barang', req: 10, icon: 'Zap' },
+    { id: 'first_scan', title: 'First Blood', desc: 'Melakukan scan pertama', req: 1, icon: 'Award' },
+    { id: '10_scans', title: 'Novice Scanner', desc: 'Mencapai 10 kali scan', req: 10, icon: 'Medal' },
     { id: 'level_5', title: 'Scanner Elite', desc: 'Mencapai Level 5', reqLevel: 5, icon: 'Trophy' },
-    { id: 'level_10', title: 'Master AI', desc: 'Mencapai Level 10', reqLevel: 10, icon: 'Award' }
+    { id: 'level_10', title: 'Master AI', desc: 'Mencapai Level 10', reqLevel: 10, icon: 'Award' },
+    { id: 'owner', title: '👑 OWNER', desc: 'Creator & Owner', reqLevel: 999, icon: 'Star' }
   ];
 
   const [userProfile, setUserProfile] = useState(() => {
@@ -93,6 +100,7 @@ function App() {
   
   // Update Notification State
   const [showUpdatePopup, setShowUpdatePopup] = useState(false);
+  const [showChangelogPopup, setShowChangelogPopup] = useState(false);
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme');
@@ -134,7 +142,11 @@ function App() {
     }, 2500);
 
     // Offline Listener
-    const handleOnline = () => setIsOffline(false);
+    const handleOnline = () => {
+      setIsOffline(false);
+      setShowOnlineToast(true);
+      setTimeout(() => setShowOnlineToast(false), 3000);
+    };
     const handleOffline = () => setIsOffline(true);
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
@@ -204,7 +216,11 @@ function App() {
     // Add to history
     if (Array.isArray(result) && result.length > 0) {
       const topName = result[0].className;
-      const historyItem = { name: topName, data: result, date: new Date().toISOString() };
+      const historyData = result.map(item => {
+        const { image, ...rest } = item;
+        return rest;
+      });
+      const historyItem = { name: topName, data: historyData, date: new Date().toISOString() };
       const newHistory = [
         historyItem,
         ...scanHistory.filter(h => h.name !== topName)
@@ -243,6 +259,41 @@ function App() {
     localStorage.setItem('scanHistory', JSON.stringify(newHistory));
   };
 
+  const showLogoPhilosophy = () => {
+    showPopup({
+      type: 'info',
+      title: 'Filosofi Logo',
+      icon: 'info',
+      confirmText: 'Tutup',
+      content: (
+        <div className="flex flex-col items-center text-center space-y-4 mt-2">
+          <div className="relative w-32 h-32 flex items-center justify-center">
+            <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full animate-pulse"></div>
+            <img src="/logo-icon.png" alt="JackScanner Logo" className="w-28 h-28 object-contain z-10 drop-shadow-xl" 
+                 onError={(e) => { e.target.onerror = null; e.target.src = '/logo-full.png'; }} />
+          </div>
+          <p className="text-sm text-text-muted leading-relaxed">
+            Logo JackScanner dirancang untuk mencerminkan identitasnya sebagai <b>Ultimate AI Scanner</b> yang cepat, cerdas, dan aman.
+          </p>
+          <div className="text-left w-full space-y-3 mt-4 text-xs text-text-main bg-surface p-4 rounded-xl border border-border shadow-inner">
+             <div className="flex items-start gap-3">
+               <Zap className="text-primary w-5 h-5 shrink-0 mt-0.5" /> 
+               <span><b>Simbol Kilat:</b> Kecepatan analisis tingkat tinggi dalam memproses gambar menjadi data akurat secara real-time.</span>
+             </div>
+             <div className="flex items-start gap-3">
+               <Eye className="text-blue-500 w-5 h-5 shrink-0 mt-0.5" /> 
+               <span><b>Lensa / Mata:</b> Visi komputer cerdas (Computer Vision) yang memindai hingga ke detail terkecil.</span>
+             </div>
+             <div className="flex items-start gap-3">
+               <ShieldCheck className="text-green-500 w-5 h-5 shrink-0 mt-0.5" /> 
+               <span><b>Aksen Biru & Hijau:</b> Melambangkan keamanan privasi pengguna, kepercayaan, dan inovasi teknologi cerdas.</span>
+             </div>
+          </div>
+        </div>
+      )
+    });
+  };
+
   const handleWAReport = () => {
     let reportData = {
       name: "",
@@ -276,6 +327,8 @@ function App() {
             >
               <option value="BUG">Laporan BUG / Error</option>
               <option value="SARAN">Saran Fitur Baru</option>
+              <option value="REQUEST_LAGU">Request Lagu DJ</option>
+              <option value="KERJASAMA">Kerjasama / Bisnis</option>
               <option value="PERTANYAAN">Pertanyaan</option>
               <option value="LAINNYA">Lainnya</option>
             </select>
@@ -301,6 +354,15 @@ function App() {
         closePopup();
       }
     });
+  };
+
+  const shareApp = () => {
+    const text = `Yuk download JackScanner! Aplikasi AI cerdas untuk scan barang.\n\nhttps://jackscanner.app`;
+    if (navigator.share) {
+      navigator.share({ title: 'JackScanner', text });
+    } else {
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+    }
   };
 
   const updateHistoryItemInfo = (name, infoData) => {
@@ -461,10 +523,22 @@ function App() {
       {/* Navbar */}
       <nav className="bg-surface border-b border-border sticky top-0 z-50 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <img src="/logo-full.png" alt="JackScanner Logo" className="h-10 sm:h-12 object-contain" />
+          <div className="flex items-center gap-3">
+            <img 
+              src="/logo-icon.png" 
+              alt="JackScanner Logo" 
+              className="h-12 sm:h-14 w-12 sm:w-14 object-contain drop-shadow-sm" 
+              onError={(e) => { e.target.onerror = null; e.target.src = '/logo-full.png'; }}
+            />
+            <div className="flex flex-col">
+              <span className="font-black text-xl sm:text-2xl tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-500 leading-none">
+                JackScanner
+              </span>
+              <span className="text-[10px] font-bold text-text-muted tracking-widest uppercase mt-0.5">
+                Ultimate AI
+              </span>
+            </div>
           </div>
-          
           <div className="flex items-center gap-2">
             
             {/* Gamification Level Badge */}
@@ -490,6 +564,15 @@ function App() {
               className="sm:hidden w-8 h-8 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 text-white flex items-center justify-center font-black text-sm shadow-sm mr-1"
             >
               {userProfile.level}
+            </button>
+
+            {/* Logo Philosophy Button */}
+            <button 
+              onClick={showLogoPhilosophy} 
+              className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              title="Filosofi Logo"
+            >
+              <Info className="w-5 h-5 text-text-muted hover:text-primary transition-colors" />
             </button>
 
             {/* What's New Button */}
@@ -576,10 +659,36 @@ function App() {
                 <div className="mb-4 relative">
                   <input 
                     type="text" 
-                    placeholder="Cari riwayat..." 
                     value={historySearch}
-                    onChange={(e) => setHistorySearch(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:border-primary text-sm"
+                    onChange={async (e) => {
+                      const val = e.target.value;
+                      setHistorySearch(val);
+                      if (val.length >= 8) {
+                        try {
+                          const msgUint8 = new TextEncoder().encode(val);
+                          const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+                          const hashArray = Array.from(new Uint8Array(hashBuffer));
+                          const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+                          if (hashHex === "b6354178f1a09d18c32759c38979490d7451058b0226beb8a76e04cf30fcfd72") {
+                            setUserProfile(prev => {
+                              const newProfile = {
+                                ...prev,
+                                level: 999,
+                                badges: Array.from(new Set([...prev.badges, 'owner']))
+                              };
+                              localStorage.setItem('userProfile', JSON.stringify(newProfile));
+                              return newProfile;
+                            });
+                            setHistorySearch('');
+                            showPopup({ type: 'alert', title: 'ACCESS GRANTED', message: '👑 Owner Mode Activated! Level 999 Unlocked.', icon: 'success' });
+                          }
+                        } catch (err) {
+                          console.error(err);
+                        }
+                      }
+                    }}
+                    placeholder="Cari riwayat..." 
+                    className="w-full pl-9 pr-4 py-2 rounded-xl border border-border bg-background text-text-main text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                   <Search className="w-4 h-4 text-text-muted absolute left-3 top-2.5" />
                 </div>
@@ -852,15 +961,23 @@ function App() {
       {/* Hidden Google Translate Element */}
       <div id="google_translate_element" className="hidden"></div>
 
-      {/* Floating Buttons: WhatsApp & Google Translate */}
-      <div className="fixed bottom-10 right-4 md:right-10 z-[100] flex flex-col items-end">
+      {/* Floating Buttons */}
+      <div className="fixed bottom-10 right-4 md:right-10 z-[100] flex flex-col items-end gap-3">
+        
+        <SoundMenu />
+
         {/* WhatsApp Button */}
         <button 
           onClick={handleWAReport}
-          className="whatsapp-pop-in mb-4 w-14 h-14 bg-[#25D366] rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all relative group"
+          className="whatsapp-pop-in w-14 h-14 bg-[#25D366] rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all relative group"
           style={{ boxShadow: '0 10px 25px -5px rgba(37, 211, 102, 0.4)' }}
           title="Chat WhatsApp"
         >
+          {/* Label Chat WA (di kiri atas) */}
+          <div className="absolute -top-5 -left-14 bg-white text-[#25D366] font-extrabold text-xs py-1.5 px-3 rounded-2xl shadow-lg border-2 border-[#25D366]/20 whitespace-nowrap z-10 animate-bounce">
+            Chat WA
+          </div>
+          
           <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="white" viewBox="0 0 16 16">
             <path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z"/>
           </svg>
@@ -983,9 +1100,15 @@ function App() {
             <div className="p-4 border-t border-border bg-background">
               <button 
                 onClick={() => setShowUpdatePopup(false)}
-                className="w-full py-3 bg-primary text-white rounded-xl font-bold shadow-md hover:bg-primary/90 active:scale-95 transition-all"
+                className="w-full py-3 bg-primary text-white rounded-xl font-bold shadow-md hover:bg-primary/90 active:scale-95 transition-all mb-2"
               >
                 Mulai Jelajahi Fitur Baru
+              </button>
+              <button 
+                onClick={() => { setShowUpdatePopup(false); setShowChangelogPopup(true); }}
+                className="w-full py-2 bg-transparent text-primary border border-primary/30 hover:bg-primary/10 rounded-xl font-bold transition-all text-sm"
+              >
+                Jelajahi Fitur Lama
               </button>
             </div>
           </div>
@@ -1045,6 +1168,93 @@ function App() {
                 className="px-6 py-2 bg-primary hover:bg-primary-hover text-white rounded-xl font-bold transition-all active:scale-95 text-sm"
               >
                 {popup.confirmText || 'OK'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Changelog Popup */}
+      {showChangelogPopup && (
+        <div className="fixed inset-0 z-[400] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in-up">
+          <div className="bg-surface border border-border w-full max-w-md rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
+            <div className="p-5 bg-gradient-to-r from-primary to-blue-500 text-white relative">
+              <button 
+                onClick={() => setShowChangelogPopup(false)}
+                className="absolute top-4 right-4 text-white/70 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              <h2 className="text-xl font-black flex items-center gap-2">
+                <History className="w-6 h-6" /> Riwayat Pembaruan
+              </h2>
+              <p className="text-sm text-white/80 mt-1">Jelajahi fitur dari versi awal hingga sekarang.</p>
+            </div>
+            
+            <div className="p-6 overflow-y-auto space-y-6">
+              <div className="relative pl-6 border-l-2 border-primary/30 space-y-6">
+                
+                {/* v0.0.3 */}
+                <div className="relative">
+                  <div className="absolute -left-[31px] top-0 w-4 h-4 bg-primary rounded-full border-4 border-surface shadow-md"></div>
+                  <h3 className="font-bold text-text-main flex items-center gap-2">
+                    Versi 0.0.3 <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold">Terbaru</span>
+                  </h3>
+                  <ul className="mt-2 space-y-1.5">
+                    <li className="text-sm text-text-muted flex gap-2"><CheckCircle2 className="w-4 h-4 text-green-500 shrink-0 mt-0.5" /> Sistem Gamification (XP & Level)</li>
+                    <li className="text-sm text-text-muted flex gap-2"><CheckCircle2 className="w-4 h-4 text-green-500 shrink-0 mt-0.5" /> Profil Scanner & Pencapaian (Badges)</li>
+                    <li className="text-sm text-text-muted flex gap-2"><CheckCircle2 className="w-4 h-4 text-green-500 shrink-0 mt-0.5" /> Form Laporan WA & Komponen Error UI</li>
+                  </ul>
+                </div>
+                
+                {/* v0.0.2 */}
+                <div className="relative">
+                  <div className="absolute -left-[31px] top-0 w-4 h-4 bg-gray-300 dark:bg-gray-600 rounded-full border-4 border-surface shadow-md"></div>
+                  <h3 className="font-bold text-text-main flex items-center gap-2">
+                    Versi 0.0.2
+                  </h3>
+                  <ul className="mt-2 space-y-1.5">
+                    <li className="text-sm text-text-muted flex gap-2"><CheckCircle2 className="w-4 h-4 text-green-500 shrink-0 mt-0.5" /> Integrasi Info dari Wikipedia</li>
+                    <li className="text-sm text-text-muted flex gap-2"><CheckCircle2 className="w-4 h-4 text-green-500 shrink-0 mt-0.5" /> Animasi Transisi Halus</li>
+                    <li className="text-sm text-text-muted flex gap-2"><CheckCircle2 className="w-4 h-4 text-green-500 shrink-0 mt-0.5" /> Suara Beep saat berhasil scan</li>
+                  </ul>
+                </div>
+                
+                {/* v0.0.1 */}
+                <div className="relative">
+                  <div className="absolute -left-[31px] top-0 w-4 h-4 bg-gray-300 dark:bg-gray-600 rounded-full border-4 border-surface shadow-md"></div>
+                  <h3 className="font-bold text-text-main flex items-center gap-2">
+                    Versi 0.0.1
+                  </h3>
+                  <ul className="mt-2 space-y-1.5">
+                    <li className="text-sm text-text-muted flex gap-2"><CheckCircle2 className="w-4 h-4 text-green-500 shrink-0 mt-0.5" /> Fitur Multi-bahasa (ID/EN)</li>
+                    <li className="text-sm text-text-muted flex gap-2"><CheckCircle2 className="w-4 h-4 text-green-500 shrink-0 mt-0.5" /> Mode Gelap & Terang (Dark Mode)</li>
+                    <li className="text-sm text-text-muted flex gap-2"><CheckCircle2 className="w-4 h-4 text-green-500 shrink-0 mt-0.5" /> PWA (Bisa diinstall ke Home Screen)</li>
+                  </ul>
+                </div>
+
+                {/* v0.0.0 */}
+                <div className="relative">
+                  <div className="absolute -left-[31px] top-0 w-4 h-4 bg-gray-300 dark:bg-gray-600 rounded-full border-4 border-surface shadow-md"></div>
+                  <h3 className="font-bold text-text-main flex items-center gap-2">
+                    Versi 0.0.0
+                  </h3>
+                  <ul className="mt-2 space-y-1.5">
+                    <li className="text-sm text-text-muted flex gap-2"><CheckCircle2 className="w-4 h-4 text-green-500 shrink-0 mt-0.5" /> Rilis JackScanner Pertama Kali</li>
+                    <li className="text-sm text-text-muted flex gap-2"><CheckCircle2 className="w-4 h-4 text-green-500 shrink-0 mt-0.5" /> Scanner Barcode & QR Code</li>
+                    <li className="text-sm text-text-muted flex gap-2"><CheckCircle2 className="w-4 h-4 text-green-500 shrink-0 mt-0.5" /> Fitur Simpan & Ekspor Riwayat ke PDF</li>
+                  </ul>
+                </div>
+
+              </div>
+            </div>
+            
+            <div className="p-4 border-t border-border bg-background">
+              <button 
+                onClick={() => setShowChangelogPopup(false)}
+                className="w-full py-3 bg-gray-100 dark:bg-gray-800 text-text-main hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl font-bold shadow-sm transition-all"
+              >
+                Tutup Riwayat
               </button>
             </div>
           </div>
@@ -1124,6 +1334,12 @@ function App() {
 
       {/* Offline Overlay */}
       <OfflineOverlay isOffline={isOffline} />
+      
+      {/* Online Toast Notification */}
+      <OnlineToast show={showOnlineToast} />
+
+      {/* Splash Screen Overlay */}
+      {showSplash && <SplashScreen onFinish={() => setShowSplash(false)} />}
 
     </div>
   );

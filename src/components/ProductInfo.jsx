@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Beaker, AlertTriangle, RefreshCcw, BrainCircuit, Box, MousePointerClick, Loader2, Search, Volume2, VolumeX, Download, Share2 } from "lucide-react";
+import { Beaker, AlertTriangle, RefreshCcw, BrainCircuit, Box, MousePointerClick, Loader2, Search, Volume2, VolumeX, Download, Share2, ShoppingBag, ShoppingCart } from "lucide-react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { getChemicalInfoFromAI } from "../aiService";
@@ -101,6 +101,16 @@ const ProductInfo = ({ result, onReset, lang, onUpdateInfo }) => {
     window.open(`https://wa.me/?text=${encodedText}`, '_blank');
   };
 
+  const handleSearchShopee = () => {
+    const query = encodeURIComponent(info.name);
+    window.open(`https://shopee.co.id/search?keyword=${query}`, '_blank');
+  };
+
+  const handleSearchTokopedia = () => {
+    const query = encodeURIComponent(info.name);
+    window.open(`https://www.tokopedia.com/search?q=${query}`, '_blank');
+  };
+
   if (isLoading || !info) {
     return (
       <div className="space-y-6 animate-pulse">
@@ -171,28 +181,41 @@ const ProductInfo = ({ result, onReset, lang, onUpdateInfo }) => {
   return (
     <div className="space-y-6 animate-fade-in-up" ref={printRef}>
       {/* Result Header */}
-      <div className="card p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-l-4 border-l-primary bg-surface">
-        <div>
-          <p className="text-sm font-semibold text-primary uppercase tracking-wider mb-1 flex items-center gap-2">
-            <BrainCircuit className="w-4 h-4" /> 
-            {activeLabel ? "Manual Input (User)" : `${t.confidence}: ${confidencePercent}%`}
-          </p>
-          <div className="flex items-center gap-3">
-            <h2 className="text-2xl font-bold text-text-main capitalize">{info.name}</h2>
-            <button 
-              onClick={handleSpeak}
-              className={`p-2 rounded-full transition-colors ${isPlaying ? 'bg-primary text-white shadow-md animate-pulse' : 'bg-background text-text-muted hover:bg-gray-200 dark:hover:bg-gray-800'}`}
-              title="Bacakan Info"
-            >
-              {isPlaying ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
-            </button>
+      <div className="card p-6 flex flex-col sm:flex-row items-start justify-between gap-4 border-l-4 border-l-primary bg-surface">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 w-full">
+          {result[0]?.image && (
+            <div className="w-full sm:w-28 sm:h-28 shrink-0 rounded-xl overflow-hidden border-2 border-border shadow-sm bg-background relative group">
+              <img src={result[0].image} alt="Scanned object" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+            </div>
+          )}
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-primary uppercase tracking-wider mb-1 flex items-center gap-2">
+              <BrainCircuit className="w-4 h-4" /> 
+              {activeLabel ? "Manual Input (User)" : `${t.confidence}: ${confidencePercent}%`}
+            </p>
+            <div className="flex items-center gap-3">
+              <h2 className="text-2xl font-bold text-text-main capitalize">{info.name}</h2>
+              <button 
+                onClick={handleSpeak}
+                className={`p-2 rounded-full transition-colors ${isPlaying ? 'bg-primary text-white shadow-md animate-pulse' : 'bg-background text-text-muted hover:bg-gray-200 dark:hover:bg-gray-800'}`}
+                title="Bacakan Info"
+              >
+                {isPlaying ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+              </button>
+            </div>
+            <p className="text-text-muted text-sm mt-2">
+              {t.originalLabel}: <span className="font-mono text-xs bg-background px-2 py-0.5 rounded text-text-muted">{activeLabel || selectedPrediction.className}</span>
+            </p>
           </div>
-          <p className="text-text-muted text-sm mt-1">
-            {t.originalLabel}: <span className="font-mono text-xs bg-background px-2 py-0.5 rounded text-text-muted">{activeLabel || selectedPrediction.className}</span>
-          </p>
         </div>
         <div className="flex flex-wrap gap-2 shrink-0" data-html2canvas-ignore>
-          <button onClick={handleShareWA} className="btn-secondary whitespace-nowrap !bg-green-50 !text-green-700 !border-green-200 hover:!bg-green-100 hover:!border-green-300 dark:!bg-green-900/30 dark:!text-green-400 dark:!border-green-800">
+          <button onClick={handleSearchShopee} className="btn-secondary whitespace-nowrap !bg-orange-50 !text-orange-600 !border-orange-200 hover:!bg-orange-100 hover:!border-orange-300 dark:!bg-orange-900/30 dark:!text-orange-400 dark:!border-orange-800" title="Cari di Shopee">
+            <ShoppingBag className="w-4 h-4" /> Shopee
+          </button>
+          <button onClick={handleSearchTokopedia} className="btn-secondary whitespace-nowrap !bg-green-50 !text-green-600 !border-green-200 hover:!bg-green-100 hover:!border-green-300 dark:!bg-green-900/30 dark:!text-green-400 dark:!border-green-800" title="Cari di Tokopedia">
+            <ShoppingCart className="w-4 h-4" /> Tokopedia
+          </button>
+          <button onClick={handleShareWA} className="btn-secondary whitespace-nowrap !bg-teal-50 !text-teal-700 !border-teal-200 hover:!bg-teal-100 hover:!border-teal-300 dark:!bg-teal-900/30 dark:!text-teal-400 dark:!border-teal-800">
             <Share2 className="w-4 h-4" /> Share WA
           </button>
           <button onClick={handleDownloadPDF} disabled={isDownloading} className="btn-secondary whitespace-nowrap !bg-blue-50 !text-blue-700 !border-blue-200 hover:!bg-blue-100 hover:!border-blue-300 dark:!bg-blue-900/30 dark:!text-blue-400 dark:!border-blue-800 disabled:opacity-50">
