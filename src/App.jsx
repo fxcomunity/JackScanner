@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Scanner from './components/Scanner';
 import ProductInfo from './components/ProductInfo';
 import CyberScanner from './components/CyberScanner';
-import { Database, ShieldCheck, Camera, Globe, MapPin, Building, Moon, Sun, History, Trash2, ArrowRight, Search, Star, Terminal, Download, Upload, X, Zap, CheckCircle2, AlertTriangle, Info, Bell, Award, Eye, Trophy, Medal, WifiOff, Volume2, VolumeX, Music } from 'lucide-react';
+import { Database, ShieldCheck, Camera, Globe, MapPin, Building, Moon, Sun, History, Trash2, ArrowRight, Search, Star, Terminal, Download, Upload, X, Zap, CheckCircle2, AlertTriangle, Info, Bell, Award, Eye, Trophy, Medal, WifiOff, Volume2, VolumeX, Music, Menu, Share2, MessageCircle, Languages } from 'lucide-react';
 import { i18n, languages } from './i18n';
 import OfflineOverlay from './components/errors/OfflineOverlay';
 import ServerError500 from './components/errors/ServerError500';
@@ -17,6 +17,7 @@ function App() {
   const [scanResult, setScanResult] = useState(null);
   const [lang, setLang] = useState('id');
   const [isLangOpen, setIsLangOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const [scanHistory, setScanHistory] = useState([]);
   const [historySearch, setHistorySearch] = useState('');
@@ -566,32 +567,15 @@ function App() {
               {userProfile.level}
             </button>
 
-            {/* Logo Philosophy Button */}
+            {/* Hamburger Menu Button */}
             <button 
-              onClick={showLogoPhilosophy} 
-              className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-              title="Filosofi Logo"
+              onClick={() => setIsSidebarOpen(true)} 
+              className="p-2 ml-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors relative"
+              title="Menu"
             >
-              <Info className="w-5 h-5 text-text-muted hover:text-primary transition-colors" />
-            </button>
-
-            {/* What's New Button */}
-            <button 
-              onClick={() => setShowUpdatePopup(true)} 
-              className="p-2 rounded-full hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors text-blue-600 dark:text-blue-400 relative"
-              title="Apa yang baru?"
-            >
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full animate-ping"></span>
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
-            </button>
-            {/* Dark Mode Toggle */}
-            <button 
-              onClick={toggleDarkMode} 
-              className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-              title="Toggle Dark Mode"
-            >
-              {isDark ? <Sun className="w-5 h-5 text-yellow-500" /> : <Moon className="w-5 h-5 text-text-muted" />}
+              <Menu className="w-6 h-6 text-text-main" />
+              {/* Notification dot if there's an update (simulated) */}
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-surface"></span>
             </button>
           </div>
         </div>
@@ -966,60 +950,157 @@ function App() {
         
         <SoundMenu />
 
-        {/* WhatsApp Button */}
-        <button 
-          onClick={handleWAReport}
-          className="whatsapp-pop-in w-14 h-14 bg-[#25D366] rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all relative group"
-          style={{ boxShadow: '0 10px 25px -5px rgba(37, 211, 102, 0.4)' }}
-          title="Chat WhatsApp"
-        >
-          {/* Label Chat WA (di kiri atas) */}
-          <div className="absolute -top-5 -left-14 bg-white text-[#25D366] font-extrabold text-xs py-1.5 px-3 rounded-2xl shadow-lg border-2 border-[#25D366]/20 whitespace-nowrap z-10 animate-bounce">
-            Chat WA
-          </div>
-          
-          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="white" viewBox="0 0 16 16">
-            <path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z"/>
-          </svg>
-          
-          {/* Notification Badge */}
-          <span className="absolute top-0 right-0 flex h-3 w-3">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-          </span>
-        </button>
-
-        {isLangOpen && (
-          <div className="mb-4 bg-surface rounded-2xl shadow-2xl border border-border p-2 animate-fade-in-up max-h-[60vh] overflow-y-auto w-56 transform origin-bottom-right">
-            <div className="px-3 py-2 text-xs font-bold text-gray-400 uppercase tracking-wider mb-1 border-b border-gray-100">
-              Google Terjemahan
-            </div>
-            {languages.map(l => (
-              <button
-                key={l.code}
-                onClick={() => handleLanguageSelect(l.code)}
-                className={`w-full text-left px-3 py-2.5 text-sm flex items-center gap-3 hover:bg-blue-50 rounded-xl transition-all ${lang === l.code ? 'bg-blue-50/80 text-blue-600 font-bold' : 'text-gray-700 font-medium'}`}
-              >
-                <img src={`https://flagcdn.com/w20/${l.country}.png`} alt={l.name} className="w-5 h-auto rounded-sm shadow-sm" />
-                {l.name}
-              </button>
-            ))}
-          </div>
-        )}
-        
-        <button 
-          onClick={() => setIsLangOpen(!isLangOpen)}
-          className="tour-lang w-14 h-14 bg-surface rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all border border-border group relative overflow-hidden"
-          style={{ boxShadow: '0 10px 25px -5px rgba(66, 133, 244, 0.4)' }}
-        >
-          <div className="absolute inset-0 bg-blue-50 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-          <img 
-            src="https://upload.wikimedia.org/wikipedia/commons/d/d7/Google_Translate_logo.svg" 
-            alt="Google Translate" 
-            className="w-8 h-8 relative z-10"
-          />
-        </button>
+        <SoundMenu />
       </div>
+
+      {/* Sidebar Hamburger Menu */}
+      {isSidebarOpen && (
+        <div className="fixed inset-0 z-[200] flex justify-end">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in" 
+            onClick={() => setIsSidebarOpen(false)}
+          ></div>
+          
+          {/* Sidebar Panel */}
+          <div className="relative w-72 h-full bg-surface shadow-2xl flex flex-col transform transition-transform duration-300 translate-x-0 animate-slide-in-right">
+            {/* Sidebar Header */}
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <span className="font-black text-lg text-text-main">Menu Utama</span>
+              <button 
+                onClick={() => setIsSidebarOpen(false)} 
+                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-text-muted hover:text-red-500"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            {/* Sidebar Content */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-6">
+              
+              {/* Settings Section */}
+              <div>
+                <h4 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-3">Pengaturan</h4>
+                <div className="space-y-1">
+                  <button 
+                    onClick={() => { toggleDarkMode(); setIsSidebarOpen(false); }}
+                    className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-text-main">
+                      {isDark ? <Sun className="w-4 h-4 text-yellow-500" /> : <Moon className="w-4 h-4" />}
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-text-main">{isDark ? 'Mode Terang' : 'Mode Gelap'}</p>
+                      <p className="text-xs text-text-muted">Ubah tema aplikasi</p>
+                    </div>
+                  </button>
+                  
+                  <div className="relative">
+                    <button 
+                      onClick={() => setIsLangOpen(!isLangOpen)}
+                      className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
+                    >
+                      <div className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600">
+                        <Languages className="w-4 h-4" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-text-main">Bahasa</p>
+                        <p className="text-xs text-text-muted">Ganti bahasa (Terjemahan)</p>
+                      </div>
+                    </button>
+                    {isLangOpen && (
+                      <div className="mt-2 bg-background rounded-xl border border-border p-2">
+                        {languages.map(l => (
+                          <button
+                            key={l.code}
+                            onClick={() => { handleLanguageSelect(l.code); setIsLangOpen(false); setIsSidebarOpen(false); }}
+                            className={`w-full text-left px-3 py-2 text-sm flex items-center gap-3 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-all ${lang === l.code ? 'bg-blue-50 dark:bg-blue-900/50 text-blue-600 font-bold' : 'text-text-main'}`}
+                          >
+                            <img src={`https://flagcdn.com/w20/${l.country}.png`} alt={l.name} className="w-5 h-auto rounded-sm shadow-sm" />
+                            {l.name}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Info Section */}
+              <div>
+                <h4 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-3">Informasi</h4>
+                <div className="space-y-1">
+                  <button 
+                    onClick={() => { setShowUpdatePopup(true); setIsSidebarOpen(false); }}
+                    className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-purple-50 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 relative">
+                      <Bell className="w-4 h-4" />
+                      <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-text-main">Riwayat Pembaruan</p>
+                      <p className="text-xs text-text-muted">Lihat fitur terbaru (v{APP_VERSION})</p>
+                    </div>
+                  </button>
+
+                  <button 
+                    onClick={() => { showLogoPhilosophy(); setIsSidebarOpen(false); }}
+                    className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-cyan-50 dark:bg-cyan-900/30 flex items-center justify-center text-cyan-600">
+                      <Info className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-text-main">Filosofi Logo</p>
+                      <p className="text-xs text-text-muted">Kisah di balik logo JackScanner</p>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              {/* Developer Section */}
+              <div>
+                <h4 className="text-xs font-bold text-text-muted uppercase tracking-wider mb-3">Hubungi Kami</h4>
+                <div className="space-y-1">
+                  <button 
+                    onClick={() => { handleWAReport(); setIsSidebarOpen(false); }}
+                    className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-green-50 dark:hover:bg-green-900/30 transition-colors text-left"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white shadow-sm">
+                      <MessageCircle className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-text-main">Chat via WhatsApp</p>
+                      <p className="text-xs text-text-muted">Lapor Bug, Kerjasama, dll</p>
+                    </div>
+                  </button>
+
+                  <button 
+                    onClick={() => { shareApp(); setIsSidebarOpen(false); }}
+                    className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors text-left"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white shadow-sm">
+                      <Share2 className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-text-main">Bagikan Aplikasi</p>
+                      <p className="text-xs text-text-muted">Ajak temanmu menggunakan AI</p>
+                    </div>
+                  </button>
+                </div>
+              </div>
+              
+            </div>
+            
+            {/* Sidebar Footer */}
+            <div className="p-4 border-t border-border text-center">
+              <p className="text-xs text-text-muted font-medium">JackScanner Ultimate v{APP_VERSION}</p>
+              <p className="text-[10px] text-text-muted/60 mt-1">Made with ❤️ by Jack</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* PWA Custom Install Popup */}
       {showInstallPopup && (
