@@ -358,7 +358,7 @@ function App() {
   };
 
   const shareApp = () => {
-    const text = `Yuk download JackScanner! Aplikasi AI cerdas untuk scan barang.\n\nhttps://jackscanner.app`;
+    const text = `Yuk coba JackScanner! Aplikasi AI cerdas untuk scan barang.\n\nhttps://jack-scanner.vercel.app/`;
     if (navigator.share) {
       navigator.share({ title: 'JackScanner', text });
     } else {
