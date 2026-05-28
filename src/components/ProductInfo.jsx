@@ -181,7 +181,7 @@ const ProductInfo = ({ result, onReset, lang, onUpdateInfo }) => {
   return (
     <div className="space-y-6 animate-fade-in-up" ref={printRef}>
       {/* Result Header */}
-      <div className="card p-6 flex flex-col sm:flex-row items-start justify-between gap-4 border-l-4 border-l-primary bg-surface">
+      <div className="card p-6 flex flex-col gap-6 border-l-4 border-l-primary bg-surface">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 w-full">
           {result[0]?.image && (
             <div className="w-full sm:w-28 sm:h-28 shrink-0 rounded-xl overflow-hidden border-2 border-border shadow-sm bg-background relative group">
@@ -194,21 +194,23 @@ const ProductInfo = ({ result, onReset, lang, onUpdateInfo }) => {
               {activeLabel ? "Manual Input (User)" : `${t.confidence}: ${confidencePercent}%`}
             </p>
             <div className="flex items-center gap-3">
-              <h2 className="text-2xl font-bold text-text-main capitalize">{info.name}</h2>
+              <h2 className="text-2xl sm:text-3xl font-bold text-text-main capitalize leading-tight">{info.name}</h2>
               <button 
                 onClick={handleSpeak}
-                className={`p-2 rounded-full transition-colors ${isPlaying ? 'bg-primary text-white shadow-md animate-pulse' : 'bg-background text-text-muted hover:bg-gray-200 dark:hover:bg-gray-800'}`}
+                className={`p-2 shrink-0 rounded-full transition-colors ${isPlaying ? 'bg-primary text-white shadow-md animate-pulse' : 'bg-background text-text-muted hover:bg-gray-200 dark:hover:bg-gray-800'}`}
                 title="Bacakan Info"
               >
                 {isPlaying ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
               </button>
             </div>
             <p className="text-text-muted text-sm mt-2">
-              {t.originalLabel}: <span className="font-mono text-xs bg-background px-2 py-0.5 rounded text-text-muted">{activeLabel || selectedPrediction.className}</span>
+              {t.originalLabel}: <span className="font-mono text-xs bg-background px-2 py-0.5 rounded border border-border text-text-muted">{activeLabel || selectedPrediction.className}</span>
             </p>
           </div>
         </div>
-        <div className="flex flex-wrap gap-2 shrink-0" data-html2canvas-ignore>
+        
+        {/* Action Buttons Container */}
+        <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4" data-html2canvas-ignore>
           <button onClick={handleSearchShopee} className="btn-secondary whitespace-nowrap !bg-orange-50 !text-orange-600 !border-orange-200 hover:!bg-orange-100 hover:!border-orange-300 dark:!bg-orange-900/30 dark:!text-orange-400 dark:!border-orange-800" title="Cari di Shopee">
             <ShoppingBag className="w-4 h-4" /> Shopee
           </button>

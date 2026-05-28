@@ -11,7 +11,7 @@ import SplashScreen from './components/SplashScreen';
 import SoundMenu from './components/SoundMenu';
 import jsPDF from "jspdf";
 import './index.css';
-const APP_VERSION = '0.0.3';
+const APP_VERSION = '0.0.4';
 
 function App() {
   const [scanResult, setScanResult] = useState(null);
@@ -1164,9 +1164,10 @@ function App() {
               </p>
               <ul className="space-y-3">
                 {[
-                  "Sistem Level & XP: Dapat 10 Poin setiap kali berhasil scan barang/teks.",
-                  "Sistem Pencapaian (Badges): Selesaikan tantangan dan kumpulkan berbagai lencana menarik.",
-                  "Profil Scanner: Lihat pangkatmu dan pantau progresmu langsung dari ikon level di pojok atas."
+                  "Hamburger Menu (Sidebar): Tampilan UI lebih rapi dan kekinian dengan menu tersembunyi.",
+                  "Spotify Mini Player: Pemutar suara AI dirombak total ala Spotify, lengkap dengan progres waktu.",
+                  "Audio Radio Mode: AI Voice & Musik kini tetap jalan (Silent Mode) meski suara di-mute.",
+                  "Rahasia Owner Mode: Sstt.. ada cheat code tersembunyi untuk instant max level!"
                 ].map((item, idx) => (
                   <li key={idx} className="flex gap-3 text-sm text-text-main">
                     <CheckCircle2 className="w-5 h-5 text-green-500 shrink-0" />
